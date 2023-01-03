@@ -1,0 +1,1779 @@
+---
+title: "StanfordOnline CSX0002 -- Mining Massive Datasets"
+author: "John HHU"
+date: "2022-12-30"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+```
+
+## R Markdown
+
+This is an R Markdown document. Markdown is a simple formatting syntax for authoring HTML, PDF, and MS Word documents. For more details on using R Markdown see <http://rmarkdown.rstudio.com>.
+
+When you click the **Knit** button a document will be generated that includes both content as well as the output of any embedded R code chunks within the document. You can embed an R code chunk like this:
+
+```{r cars}
+summary(cars)
+```
+
+## Including Plots
+
+You can also embed plots, for example:
+
+```{r pressure, echo=FALSE}
+plot(pressure)
+```
+
+Note that the `echo = FALSE` parameter was added to the code chunk to prevent printing of the R code that generated the plot.
+
+
+
+
+
+
+
+
+
+
+## Course  /  Welcome  /  Basic Information About This MOOC
+
+# README
+
+![](C:/Users/qp/Pictures/Screenshots/CSX0002 - Welcome - README.png)
+![](C:/Users/qp/Pictures/Screenshots/StanfordOnline CSX0002 - Mining Massive Datasets - Important dates.png)
+
+
+
+
+
+
+# Pre-Course Survey
+
+![](C:/Users/qp/Pictures/Screenshots/CSX0002 - Welcome - Pre-Course Survery - 1.png)
+![](C:/Users/qp/Pictures/Screenshots/CSX0002 - Welcome - Pre-Course Survery - 2.png)
+
+
+
+
+
+
+
+
+
+
+## Course  /  Module 1: MapReduce  /  Outline of Module 1
+
+# README
+
+![](C:/Users/qp/Pictures/Screenshots/CSX0002 - Outline of Module 1 - README.png)
+
+http://www.mmds.org/
+http://infolab.stanford.edu/~ullman/mmds/book0n.pdf
+
+
+
+
+
+
+
+
+
+## Course  /  Module 1: MapReduce  /  MapReduce
+
+# 1. Distributed File Systems (15:50)
+
+Welcome to Mining Massive Datasets.
+I'm Anand Rajaraman and today's topic is Map-Reduce.
+In the last few years Map-Reduce has emerged as a leading paradigm for
+mining really massive data sets.
+But before we get into Map-Reduce proper, let's spend a few minutes trying to
+understand why we need Map-Reduce in the first place.
+Let's start with the basics.
+Now we're all familiar with the basic computational model of CPU and
+memory, right?
+The algorithm runs on the CPU, and accesses data that's in memory.
+Now we may need to bring the data in from disk into memory, but
+once the data is in memory, fits in there fully.
+So you don't need to access disk again, and
+the algorithm just runs in the data that's on memory.
+Now there's a familiar model that we use to implement all kinds of algorithms, and
+machined learning, and statistics.
+And pretty much everything else.
+All right?
+Now, what happened to the data is so
+big, that it can't all fit in memory at the same time.
+That's where data mining comes in.
+And classical data mining algorithms.
+Look at the disk in addition to looking at CPU and memory.
+So the data's on disk,
+you can only bring in a portion of the data into memory at a time.
+And you can process it in batches, and you know, write back results to disk.
+And this is the realm of classical data mining algorithms.
+But sometimes even this is not sufficient.
+Let's look at an example.
+So think about Google, crawling and indexing the web, right?
+Let's say, google has crawled 10 billion web pages.
+And let's further say, that the average size of a web page is 20 KB.
+Now, these are representative numbers from real life.
+Now if you take ten billion webpages, each of 20 KB,
+you have, total data set size of 200 TB.
+Now, when you have 200 TB, let's assume that they're using
+the classical computational model, classical data mining model.
+And all this data is stored on a single disk, and
+we have read tend to be processed inside a CPU.
+Now the fundamental limitation here is the bandwidth,
+the data bandwidth between the disk and the CPU.
+The data has to be read from the disk into the CPU, and
+the disk read bandwidth for most modern SATA disk representative number.
+Is around 50MB a second.
+So, so we can read data at 50MB a second.
+How long does it take to read 200TB at 50MB a second?
+Can do some simple math, and
+the answer is 4 million seconds which is more than 46 days.
+Remember, this is an awfully long time, and
+is just the time to read the data into memory.
+To do something useful with the data, it's going to take even longer.
+Right, so clearly this is unacceptable.
+You can't take four to six days just to read the data.
+So you need a better solution.
+Now the obvious thing that you think of is that it can split the data into chunks.
+And you can have multiple disks and CPUs.
+you, you stripe the data across multiple disks.
+And you can read it, and, and process it in parallel in multiple CPUs.
+That will cut down, this time by a lot.
+For example, if you had a 1,000 disks and CPUs, in four thousa-,
+4 million seconds.
+And we were completely in parallel, in 4 million seconds, you could do the job in,
+4 million by 1,000, which is 4,000 seconds.
+And that's just about an hour which is, which is very acceptable time.
+Right? So
+this is the fundamental idea behind the idea of cluster computing.
+Right? And this is,
+this tiered architecture that has emerged for
+cluster computing is something like this.
+You have the racks consisting of commodity Linux nodes.
+As you go with commodity Linux nodes because they are very cheap.
+And you can, you can buy thousands and thousands of them and, and rack them up.
+you, you have many of these racks.
+Each rack has 16 to 64 of these commodity Linux nodes and
+these nodes are connected by a switch.
+and, the, the, the switch in a rack is typically a gigabit switch.
+So there's 1 Gbps bandwidth between any pair of nodes in rack.
+Of course 16 to 64 nodes is not sufficient.
+So you have multiple racks, and all the,
+the racks themselves are connected by backbone switches.
+And the backbones is,
+is a higher bandwidth switch can do two to ten gigabits between racks.
+Right? So so we have 16 to 64 nodes in a rack.
+And then you, you rack up multiple racks, and, and you get a data center.
+So this is the standard classical architecture that has emerged over
+the last few years.
+For you know, for storing and mining very large data sets.
+Now once you have this kind of cluster this doesn't solve the problem completely.
+Because cluster computing comes with it's own challenges.
+But before we get there, let's get us, you know, ideal of the scale, right?
+In 2011 somebody estimated that Google had a million machines,
+million nodes like this.
+In stacked up you know, is, is somewhat like this.
+So, so it gives, so that gives you a sense of the scale of modern data centers and,
+and, and clusters, right?
+So here's, here's a picture.
+This is what, it looks like inside a data center.
+So the, the, what you see there is, is the back up racks, and
+you can see the connections, between, between the racks.
+Now, once you have such a big cluster,
+you actually have to do computations on the cluster.
+Right?
+And clustered computing comes with its own, challenges.
+The first and the most major challenge is that nodes can fail.
+Right?
+Now a single, node doesn't fail that often.
+Right? If you,
+if you just connect, the next node and
+let it stay up, it can probably stay up for, three years without failing.
+Three years is about a 1,000 days.
+So that's, you know, once in a 1,000 days failure isn't such a big deal.
+But now imagine that you have a 1,000 servers in a cluster.
+And in your, and if you assume that these, servers fail, independent of each other.
+You're going to get approximately one failure a day.
+Which is, still isn't such a big deal.
+You can probably deal with it.
+But now imagine something on the scale of Google which has a million servers,
+in its cluster.
+So if you have a million servers, you're going to get a 1,000 failures per day.
+Now a 1,000 failures per day is a lot and
+you need some kind of infrastructure to deal with that kind of failure rate.
+Your failures on that scale introduce two kinds of problems.
+The first problem is that if, you know, if nodes are going to fail and
+you're going to store your data on these nodes.
+How do you keep the data and store persistently?
+What does this mean?
+Persistence means that once you store the data,
+you're guaranteed you can read it again.
+But if the node in which you stored the data fails, then you can't read the data.
+You might even lose the data.
+So how do you keep the data stored persistently if like,
+these nodes can fail.
+Now the second problem is is is one of availability.
+So, let's say you're running one of the computations, and this computation is, a,
+you know, analyzing massive amounts of data.
+And it's chugging through the computation and
+it's going, you know, run half way through the computation.
+And, you know, at this critical point, a couple of nodes fail, right?
+And that node had data that is necessary for the computation.
+Now how we deal with this problem.
+Now in the first place you may have to go back and
+restart the computation all over again.
+But if you restart it now and, and, and
+the computation turns again when the computation is running.
+So kind of need an infrastructure that can hide these kinds of node failures and
+let the computation go to go to completion even if nodes fail.
+The second challenge of cluster computing is that
+the network itself can become a bottleneck.
+Now remember, there is this 1 Gbps network bandwidth.
+That is available between individual nodes in a rack and
+a smaller bandwidth that's available between individual racks.
+Though if you have 10 TB of data, and you have to move it
+across a 1 Gbps network connection, that takes approximately a day.
+You can do the math and figure that out.
+You know a complex computation might need to move a lot of data, and
+that can slow the computation down.
+So you need a framework that you know, doesn't move data around so
+much while it's doing computation.
+The third problem is that distributed programming can be really really hard.
+Even sophisticated programmers find it hard to write distributed programs
+correctly and avoid race conditions and various kinds of complications.
+So here's a simple problem that hides most of the complexity of
+distributed programming.
+And, and makes it easy to write you know,
+algorithms that can mine very massive data sets.
+So we look at three problems that you know that we face when,
+when we're dealing with cluster computing.
+And, Map-Reduce addresses all three of these challenges.
+Right? First of all,
+the first problem that we saw was that, was one of persistence and
+availability of nodes can fade.
+The Map-Reduce model addresses this problem by storing data redundantly on
+multiple nodes.
+The same data is stored on multiple nodes so that even if you lose one of
+those nodes, the data is still available on another node.
+The second problem that we saw was one of network bottlenecks.
+And this happens when you move around data a lot.
+What the Map-Reduce model does is it moves the computation close to the data.
+And avoids copying data around the network.
+And this minimizes the network bottle neck problem.
+And thirdly, the Map-Reduce model also provides a very
+simple programming model that hides the complexity of all the online magic.
+So let's look at each of these pieces in turn.
+The first piece is the redundant storage infrastructure.
+Now redundant storage is provided by what's called a distributed file system.
+Now distributed file system is a file system that stores data you know,
+across a cluster, but stores each piece of data multiple times.
+So, the distributed file system provides a global file namespace.
+It provides redundancy and availability.
+There are multiple implementations of distributed file systems.
+Google's GFS is or Google File System, or GFS is one example.
+Hadoop's HDFS is another example.
+And these are the two most popular distributed file systems out there.
+Our typical usage pattern that these distributed file systems are optimized for
+is huge files.
+That are in the 100s to, of GB to TB.
+But the, even though the files are really huge,
+the data is very rarely updated in place.
+Right, once, once data is written you know it's, it's very, very often.
+But when it's updated, it's updated through appends.
+It's never updated in place.
+And for example let, let, imagine the Google scenario once again.
+When Google encounters a new webpage it, it adds the webpage to a depository.
+Doesn't ever go and
+update the content of the webpage that it already has crawled, right?
+So a typical usage pattern consists of writing the data once,
+reading it multiple times and appending to it occasionally.
+Lets go into the hood of a distributed file system to see how it actually works.
+Data is kept in chunks that are spread across machines.
+So if you take any file, the file is divided into chunks, and
+these chunks are spread across multiple machines.
+So the machines themselves are called chunk servers in this context.
+So here's, here's an example.
+There are multiple multiple chunks servers.
+Chunk server 1, 2, 3, and 4.
+And here's the file 1.
+And file 1 is divided into six chunks in this case, C0, C1, C2, C3, C4 and C5.
+And these chunks as you can see four of the chunks happen to be on Chunk server 1.
+One of them is on Chunks server 2 and, one of them is on Chunks server 3.
+Now this is not sufficient.
+You actually have to store multiple copies of each of these chunks and so
+we replicate these chunks so here copy, here is a copy of C1.
+On Chunk server 2, a copy of C2 in Chunk server 3, and so on.
+So each chunk, in this case is replicated twice.
+And if you notice carefully you'll see that replicas of
+a chunk are never on the same chunk server.
+They're always on different chunks of, so
+C1 has one replica on Chunk server 1 and one on Chunk server 2.
+C0 has one on Chunk server 1, and one on Chunk server N, and so on.
+And here is here is another file, D.
+D has two chunks, D0 and D1.
+And that's replicated twice.
+And so and so that's stored on different chunks server [INAUDIBLE].
+Now so, so you serve you serve from chunk files and
+store them on, on these, on these chunk servers.
+Now we turn some of the chunk servers, also act as compute servers.
+And when, whenever your computation has to access data.
+That computation is actually scheduled on the chunk server that
+actually contains the data.
+This way you avoid moving data to where the computation needs to run,
+but instead you move the computation to where the data is.
+And that's how you put a wide under the city data movement in the system.
+This isn't clear when you look at look at some examples.
+So the sum of this, each file is split into contiguous chunks.
+And the chunks are typically 16 to 64 MB in in size.
+On each chunk is replicated,
+in our example we saw each chunk replicated twice.
+But it could be 2x or 3x replication.
+3x is the most common.
+And we saw that the chunks were actually kept on different chunk servers.
+But, but when you replicate 3x, you know, the system usually makes an effort.
+To keep at least one replica in a entirely different rack if possible and
+why do we do that?
+We do that because it's you know,
+the most common scenario is that a single node can fail.
+But it's also possible that the switch on a rack can fail, and
+when the switch on a rack fails, the entire rack becomes inaccessible.
+And then if you have all the chunks for a, for in all the replicas of a chunk in
+one rack then that whole chunk can become inaccessible.
+So if you keep replicas of a chunk on different racks then even if
+a switch fails then it can still access that chunk.
+Right so the system tries to make sure that,
+that the replicas of a chunk are actually kept on different racks.
+The second component of a distributed file system is, is a master node.
+Now the master node is also known as the, it's called a master node in
+the Google file system, it's a called a Name Node in Hadoop's HDFS.
+But the master node stores metadata about where the files are stored.
+And for
+example, if my you know, it'll know that file one is divided into six chunks.
+And here is, here are the locations of each of the six chunks, and
+here are the locations of the replicas.
+And the master node itself may be replicated because otherwise it
+might become a single point of failure.
+The final component of a distributed file system is a client library.
+Now, when the, when a client, or, or an algorithm that needs to
+access the data tries to access a file it goes through the client library.
+The client library talks to the master and
+finds the chunk servers that actually store the chunks.
+And once that's done the client is directly connected to the chunk servers.
+Where it can access the data without going through the master nodes.
+So the data access actually happens in peer-to-peer fashion without going
+through the master node
+
+
+
+
+
+# 2. The MapReduce Computational Model (22:04)
+
+Welcome back to Mining of Massive Datasets.
+We're going to continue our lecture on MapReduce, and
+take a look on the MapReduce computational model.
+So before we look at the actual MapReduce Programming Model,
+let's do a warm up task.
+Now imagine you have a huge text document you know maybe tera, terabytes long and
+you want to count, the number of times each distinct word appears in the file.
+For example, we want to find out that the word the appears 10 million times and
+the word you know apple appears 433 times.
+Right?
+And some sample applications of this kind of toy example in real
+life are you know if you have a big depth of a log and you want to find out,
+how often each URL is accessed that could be a sample application.
+Or it maybe building terms, such as text for a search engine.
+Right? So, but for
+now let's just imagine that we have this one big file.
+That's a huge text document and
+our task is to count, the number of times each distinct word appears in that file.
+So, let's look at two cases,
+the first case is that the file itself is too large for memory.
+Because remember we said it's a, it's a, big, big file.
+But imagine that there are, is few enough words in it so
+that all the word count pairs actually fit in memory, right?
+How do you solve the problem in this case?
+Well it turns out, that in this case a very simple approach works.
+You can just build a, a Hash Table.
+I'll, build the, the index by word.
+And and the Hash Table for each word will of course,
+will restore the count, of the number of times, that word appears.
+So you the first time you see a word you initialize you know,
+you add an entry to the Hash Table, with that word, and set the count to 1.
+And every subsequent time you see the word, you, you increment the count by one.
+And you, you make a single sweep through the file.
+And at the end of that, you have the word count pairs for
+every unique word that appears in the file.
+So this is a simple program, that all of us have written, you know,
+many many times in some context or the other.
+Now, let's make it a little bit more complicated.
+Let's let's imagine that even the word, count pairs don't fit in memory.
+Right, the file's too big it doesn't fit in memory, but, there's so
+many words, distinct words in the file that even,
+you can't even hold all the distinct words in memory.
+Right? Now how do
+you go about solving the problem in this case?
+Well you can try to write some kind of complicated code but you know,
+I'm lazy so I like to use Unix file system commands to do this.
+And so here's how I would go about doing this
+So this is a a Unix command line way of, of doing this.
+You know here the the command you know words is,
+is, is a little script that goes through doc.txt which is the,
+which is the big text file.
+And it outputs the words in it one per line.
+And once once those words are output I can pipe them to to a sort.
+And the sort sorts the you know, sorts the output of that.
+And once you sort it
+all of the all occurrences of the same word come together.
+And once you do that you can pipe it to another little handy utility called uniq
+and one of the one of the nifty features of uniq is the, my, is the dash c option.
+And when you do uniq dash c
+what uniq dash c does is it takes a run of the occurrence of the same word.
+And then just counts the occurrences of the same word.
+So the output of this is going to be word count pairs, right?
+So and you know I, I'm sure many of you have done something like this.
+And if you've done something like this,
+you've actually done something that's like MapReduce.
+Right? So this case actually captures the essence
+of MapReduce.
+And the nice thing about this kind of implementation is that it's, it's very,
+very naturally paralle, light,
+parallelizable as we'll see in a, in a moment.
+So so let's look at an old view of MapReduce using this example, right?
+So the the first step that we did.
+What we, we took the document which was our input.
+And we wrote a script called words, that output one word to a line, right?
+And this is what's called a Map function in in, in, in MapReduce.
+The Map function scans the input file record-at-a-time.
+And for each record, it, it pulls out something that you care about.
+In this case, it was words.
+and, and the thing that the you output for
+each record you can, you, you cannot one or multiple things for each records.
+And the things that you output, are called keys, okay?
+The second step is is to group by key.
+And this is the what the, the sort step was doing.
+It grouped all the keys with the same value together.
+Right?
+And the the third step the is the, the unique minus c step.
+That's the reduce piece of MapReduce.
+And once the reducer looks at all the key you know, all
+the keys with the same value, and then it, then it ru, runs some kind of function.
+In this case it counted the number of times the each key occurred but, but
+it could be something much more complicated.
+And once it does that kind of analysis it, it has an answer which,
+which it then writes up.
+Okay, so this is MapReduce in a, in a nutshell.
+Now the, the outline of this computation actually stays the stame, same for
+any MapReduce computation.
+What changes is it that it change the Map function,
+the Reduce function, to the fit the problem that you're actually solving.
+Right?
+In this case for the word count the Map and the Reduce function were quite simple.
+In some other problems the Map and
+the Reduce functions might be more complicated.
+Here's here's, here's another way of looking at it.
+You start with a, with a bunch of key value pairs.
+And so here's k k v k stands for key and v stands for value.
+And the, the, the, the, the, the Map step.
+Takes the key-value pairs and maps them to intermediate key-value pairs.
+Okay?
+So for example, you run the Map on the first key-value pair pair here at k v and
+it it actually outputs two intermediate key-value pairs.
+And the, the intermediate key-value pairs need not have the same key,
+as input key value-pairs.
+They could be different keys.
+And there could be multiple of them.
+And the values although they look the same here, they, they both say v,
+the values could be different as well.
+And and notice in this case we started with the one input key-value pair,
+and the Map function produced multiple intermediate key-value pairs.
+So there can be zero, one, or
+multiple intermediate key-value pairs, for each, input key-value pair.
+Now let's do it again, for the second key-value pair.
+Let's apply the Map function and
+it turns out that in this case we have the one key-value pair in the,
+the in the intermediate key-value pair, in the output.
+And so on. So,
+so, we, we run through the entire input file.
+Apply the Map function to each input record.
+And create intermediate key-value pairs.
+Now the next step, is to take these intermediate key-value pairs,
+and group them by key.
+Right? So,
+all the intermediate key-value pairs that have the same key, are grouped together.
+So it turns out that there are three values.
+With the, with the first key, two values for the second key and so on.
+And they all get grouped together, and this is done by sorting by key and
+then by grouping together the value of, you know the values for the same key.
+And these are all different values,
+although I use the same same symbol v here.
+Now, once you have once you have these key value groups then the final step is
+the reducer.
+The reducer takes a look at a,
+a single a single key-value group as input and.
+It produces produces an output that has the sa, you know,
+that has the same key but it combines the the, the, the,
+the values or the values for a given key, into a single value.
+For example, it could add up all the values.
+In the, or, or it could or it could multiply them, or
+it could do, it could take the average.
+Or it can do something more complicated.
+But with all of the values for a given key.
+And finally you, the output, it outputs a single value for the key.
+Right? And so, when you,
+when you apply the reducer to the second key-value group.
+You get, you get another output and so on.
+And once you apply the reducer to all the intermediate key-value groups.
+You get the final output.
+So more formally the input to MapReduce is a set of key-value pairs.
+And the programmer has to specify two methods.
+The first method is a Map method.
+And the Map method takes an input key-value pair.
+And produces an int, an set of intermediate key-value pair, zero or
+more intermediate key-value pairs.
+and, there is one Map call, for every input key-value pairs.
+The Reduce function, takes an intermediate key-value group the intermediate key-value
+group consists of a key, and a set of values for that key.
+and, the output can consist of one, zero, one, or
+multiple key-value pairs once again.
+The key is the same as the as the input key but the value is, is,
+is is obtained by combining, the input values in some manner.
+For example, you might add up the you know, add up the input values and
+that could be the output v double prime here.
+So let's look at the the word count example and
+run that through the MapReduce process again.
+Here's our big document.
+And I hope you can see the text of this you know, the document but
+it doesn't matter, you can see that there are words in there.
+And so we're going to take this big document.
+And we're going to take the Map function that's provided by the programmer.
+The Map function reads the input, and produces a, produces a set of
+key-value pairs, and the key-value pairs in this case are going to be the key.
+Each word is going to be a key, and the value is going to be the number 1.
+Right?
+so, for example, the word the and 1 crew and
+1 and so on, and the word the appears again.
+And so there, there's another the, 1 here and so on.
+So these are the intermediate key-value pairs,
+that are produced by the Map function.
+[SOUND] Now the next step is the group by key step which
+collects together all pairs with the same key.
+So we can see that the, there are two tuples two intermediate tuples with the,
+with the key crew and then those are collected together here.
+There's one with you know,
+with the word space, there are three with the word the, and so on.
+And they're all sorted and collected together.
+In this yeah, in, in this place here.
+And the, the final step is the Reduce step.
+The Reduce, the Reduce step collects together all the values so
+the Reduce step adds, adds together the 2, 1 from crew.
+and, and figures out that there are two you know,
+two occurrences of the word crew.
+Space has 1.
+There are 3 tuples with the 1 for the there all added together.
+And the output is 3, and so on.
+Right, so this is a schematic, of the the MapReduce word counting example.
+now, of course this, this whole example doesn't run on a single node.
+The data is actually distributed across multiple input nodes.
+So let's take that into account.
+And see here's here's the data.
+The data's actually divided here into, into multiple nodes.
+Let's say the, the red the, the,
+the first portion of, of the file is it's chunk one, and it's on one node.
+The second portion of the file here is chunk two, which is on a different node.
+The third portion is chunk three, and the fourth portion is chunk four, and
+each of these is on a different node.
+Now the Map tasks are going to be run on each of these four different nodes.
+There going to be a Map task that's run on chunk one that just looks at this portion,
+the first portion of the file.
+Map task is run on chunk two that,
+that, that just looks at the second portion of the file and so on.
+And the the outputs of those Map tasks will therefore be produced,
+on on four different nodes.
+li, like so so here are the, here are the first chunk of Map output.
+The second chunk of Map output, which is on another node.
+The third chunk of Map output, which is on a third node.
+And the fourth chunk of Map output, which is on yet another node.
+Right.
+Now the output of the of, of the Map functions,
+are therefore spread across multiple nodes.
+And what the system then does, is that it it,
+it copies the, the Map outputs, onto a single node.
+And then so
+you can see the data from all these four nodes flowing into this single node here.
+And once the data has, has flowed to the single node,
+it can then sort it by key and then do the final radial step.
+Now it's a little bit trickier than this unfortunately.
+Because you know, you may not want to use you know,
+to, to move all the data from all the Map nodes,
+going to be a lot of it, into a single Reduce node, and sort it there.
+That might be a lot of you know, a lot of sorting.
+So in practice you use multiple Reduce nodes as well.
+And you, you know, when you run a MapReduce job, you can say you know,
+you can tell the system to use a certain number of Reduce nodes.
+Let's say you tell the system in this case, to use three Reduce nodes.
+So if you use three reduce nodes then the then
+the MapReduce system is smart enough to split the the, the,
+the output of the Map into, into three, three into three Reduce nodes.
+And it makes sure, that for any given key in this case the,
+all instances of the, regardless of which Map node they start out from,
+always end up at the same Reduce node, right?
+So all instances of the, whether it started from Map node one or
+Map node two ended up at Reduce node two, in this case.
+And all instances of the word crew regardless of whether they started from
+Map node one or Map node four, ended up at Reduce node one.
+And this is done by using a hash function, right?
+So the system uses a hash function that hashes each Map key and
+determines a single Reduce node to shift that tuple two.
+And this ensures that all tuples with the same key,
+end up with the same Reduce node.
+And once once tuples end up at a Reduce node, they get sorted as before.
+in, on each Reduce node and and, and
+the result is created now, on multiple Reduce nodes.
+For example the result for crew is now on is now on Reduce node one.
+The result for the is now on, on the Reduce node two and the result for
+shuttle and recently are on Reduce node three.
+So the final result is actually now spread across three nodes in the system.
+Which is perfectly fine because you're dealing with a distributed file system,
+which know, knows that your file is spread across three nodes of the system.
+So you can still access it as a single file in your client.
+And the system knows to access the data from those three three independent nodes.
+One final point before we move on from the slide is that
+all this magic in the MapReduce magic is implemented to use
+as far as possible, only sequential scans of disk as opposed to a random access is.
+If you think a little bit carefully, what all the steps that I mentioned
+about how the Map function is applied on the input file record by record.
+How the sorting is done and so on.
+A moment's thought will make it apparent that you can actually implement,
+all of this by using only sequential reads of disk, and
+never using random accesses of disk.
+Now this is super important because sequential reads are much,
+much more efficient than random accesses to disk.
+If you don't learn your basics of of database systems, it takes much,
+much longer to do random seeks.
+Than to do a single sequential axis of a file.
+And that's why the, the MapReduce, the whole MapReduce system,
+is built around doing only sequential reads of files and never random accesses.
+So here is the actual pseudocode for for the word count using MapReduce.
+Remember, the programmer is required to provide two functions, a Map function,
+a Reduce function.
+And this is the the Map function right here.
+The Map function takes a key and a value and its output has to be int,
+an intermi, a set of intermediate key-value pairs.
+Now the key in this case is,
+is a document name and the value is the text of the document.
+And the Map the Map function itself is very simple in this case.
+It scans the the input document.
+And for each word in the input document [INAUDIBLE] the input document.
+For each word in the input document it emits that word and the number 1.
+So, so it's, it's a tuple, whose key is the, is the word.
+And whose value is the number 1.
+And here's the reduced function.
+The reduced function, remember, takes a key and a set of values.
+The set of values all correspond to the same key and in this case,
+they just iterate through all the values and and, and sums them up.
+And the output has the same key and the value is the, is the sum.
+We looked at a very simple example of bullet count using MapReduce.
+Now let's look at a couple more examples.
+Here's here's here's another example.
+Suppose we have a large web corpus that we've called and, for
+each and we have a metadata file for a, for [INAUDIBLE] and
+each record in the metadata file lo, looks like this.
+It has a URL the size of the file,
+the date and then various other pieces of data.
+Now the problem, is for each host we want to find the total number of bytes.
+And not for each URL, but for each host.
+Remember, there can be multiple many URLs with the same host name,
+in the crawl and you want to find the number of bytes associated with each host,
+not with each URL, right?
+Clearly the the number of bytes associated with the host,
+is just the sum of the number of bytes associated with all the URLs for a,
+for the host and this is very easy to implement in in, in MapReduce.
+The mapper in this case, the Map function just looks at each record and
+it looks at the URL of, of the record and outputs the hostname of the URL.
+and, and, and the size, right?
+And the the Reduce function just sums the sizes for each host, right?
+And at the end of it, you will have this the, the, the size of each host.
+Here's another example.
+Let's say you're building a language model by year.
+You have a large collection of documents.
+And you want to build a language model and and this language model for
+some reason requires the count of every 5-word sequence.
+Every unique 5-word sequence that occurs in a large corpus of document.
+Earlier we looked at accounting, each unique word.
+This example ask for each 5-word sequence.
+It turns out that the solution is not very different.
+the, just the Map function differs.
+The Map function extracts you know,
+goes through each document and outputs every 5-word sequence in the document.
+And the the Reduce function just combines those counts and
+adds them up and then you have the output.
+So I hope these simple examples illustrate how MapReduce works.
+In the next section, we are going to understand how the underlying system,
+actually implements some of the magic that makes MapReduce work.
+
+
+
+
+
+
+# 3. Scheduling and Data Flow (12:43)
+
+Welcome back to Mining of Massive Datasets.
+In, the previous section will be studied the Map-Reduce model and
+how to solve some simple problems using Map-Reduce.
+In this section, we're going to go under the hood of a Map-Reduce system and
+understand how it actually works.
+Just to refresh your memory a Map-Reduce system
+has simple Map-Reduce system has three steps.
+In the Map step, you take a Big a document which is
+divided into chunks and you run a Map process on each chunk.
+And the map process go through each record in that chunk and
+it outputs an intermediate key value pairs for each vector in that, in that chunk.
+In the second set step which is a group by step you group by key.
+You you bring together all the values for, for the same key.
+And in the third step, is a reduce step.
+You apply a reducer to each intermediate key value pair set.
+And you create a final output.
+Now, here's a schematic of how it actually works in in a distributed system.
+The previous schematic was how it worked in a, in a centralized system.
+In a distributed system, you actually, have multiple nodes and map and
+reduced tasks are running in pattern on multiple nodes.
+So the here are the few chunks of the file, input file might be on on node 1.
+Few chunks on node 2 and a few chunks on node 3.
+And you have map tasks running on, on each of those nodes.
+And and producing producing it to be intermediate key value pairs on each of
+those nodes.
+And once the,
+once the intermediate key value pairs are produced, the underlying system
+the Map-Reduce system uses a partitioning function which is just a hash function.
+So the the the Map-Reduce system
+applies a hash function to each intermediate key value.
+And the has function will tell the Map-Reduce system which,
+reduce node to send that key value pair to.
+Right, this ensures that all all the, the same key values,
+whether they are map task 1, 2, or 3 end up being sent to the same reduce task.
+Right? So, in this case the key key 4.
+Regardless of where it started from, whether at 1, 2, or 3.
+Always end up at reduce task 1.
+And the key, key 1 always ends up at reduce task 2.
+Now, once once the reduce task has a reduce task has
+received input from all from all the map tasks.
+All the map tasks have completed, then you can start the reduced tasks.
+And the, the reduced tasks first job is,
+is to sort, it's input, and group it together by key.
+And so in this case, there are three values associated with the key key, key 4,
+they're all grouped together.
+And once that is done, the reduce task then, works the reduce function which is
+provided by the programmer on each each such group and creates the final output.
+Okay.
+So remember, the programmer provides two functions, Map and Reduce, and
+specifies the input file.
+The Map-Reduce environment take, has to take care of a bunch of things.
+It takes care of Partitioning the input data.
+Scheduling the program's execution on a set of machines.
+Figuring out where the map tasks run, where the reduce tasks run, and so on.
+It performs a gr, the intermediate group by step.
+And while all this is going on some nodes may fail.
+And the environment make sure that the node failures are hidden
+from the from the program.
+And finally the Map-Reduced Environment also Manages all
+the required inter-machine communication.
+[SOUND] So, we're going to take,
+take a look at exactly how what's, what's going on in a.
+So, let's look at the data flow that's associated with with, with map reduce.
+Now the the input and
+the final output of a Map-Reduced program are stored on the distributed file system.
+And the scheduler tries to schedule the map task
+close to the physical storage location of the import data.
+What that means is that recall the input data is, is a file.
+And the file is divided into chunks.
+And there are replicas of the chunks on different chunk servers.
+The Map-Reduce system try to schedule each
+map task on a chunk server that holds a copy of the corresponding chunk.
+So, there's no actual copy.
+A data copy associated with the map step of the Map-Reduce program.
+Now, the intermediate results are, are at least not stored in the distributed file
+system but stored in the local file system of the map and reduce workers.
+what, what are intermediate results?
+Intermediate results, intermediate results could be the output of a map step.
+An intermediate result could be something that,
+that limited why, why in the process of computing the reduce.
+Now why, why are such debated results not stored in the distributed file system?
+It turns out that there's some overhead to storing data in
+the distributed file system.
+Remember there are multiple replicas of the data that need to be made.
+And so there's a lot of copying.
+And network shuffling involved in,
+in storing new data in the distributed file system.
+So, whenever possible, intermediate results are actually stored in
+the local file system of the Map and Reduced workers,
+ended up being stored in the distributed file system to avoid more network traffic.
+And finally, as you'll see in future examples the output
+of a Map-Reduce task is often being the input to another Map-Reduce task.
+Now, the master node takes care of all the coordination aspects of a Map-Reduce job.
+The master node keeps, you know, associates a task status with each task.
+A task to see the map tasker reduce task.
+And each task has has a status flag.
+And the status flag can either be idle, in progress, or completed.
+The master schedules idle tasks whenever workers become available.
+Whenever, there is a free a node that is tha, that's available for, for
+scheduling tasks.
+The master goes through it's queue of idle tasks, and schedules an idle task on that,
+on that worker.
+When the, when a map task completes, it sends the the master the location and
+sizes of it's the R intermediate files that it, that creates.
+Now, why, R intermediate files?
+There's one intermediate file that's created for each reducer.
+Because the data, the output of the mapper has to be shipped to each of the reducers,
+depending on the, on the key value.
+And so there R intermediate files, one for each reducer.
+So, whenever, a map task completes, it let it's, it's,
+it's stores the R intermediate files.
+On it's local file system,
+and it let's the master know what the names of those files are.
+The master pushes this inf, information to the reducers.
+Once the reducers know that all the mappers map tasks are completed,
+then they copy the intermediate file from each of the map tasks.
+And then they can proceed with their work.
+Now, the master also per,
+periodically pings the workers, to detect whether a worker has failed.
+And if a worker has failed, the master has to do something.
+And we're going to, see what that something is.
+If a map worker fails, then the, all the map tasks that were scheduled.
+On that on that map worker may have failed.
+So, the the tricky thing is that the output of a map task is written to
+the local file system of the, of the map worker.
+So, if a map worker fails, then the node fails.
+Then all intermediate output created by all the map tasks that have
+ran on that worker, are lost.
+And so the, what the master does, is that it resets to idle,
+the status of every task that was either completed or in progress on that worker.
+Right, and so all those tasks need to be, eventually be done, and
+they will eventually be rescheduled on other workers in the course.
+If a reduced worker fails on the other hand,
+only the in progress tasks are set to idle.
+The tasks that are actually been completed by the reduced worker,
+don't need to be set to idle.
+Because, the output of the reduced worker is a final output, and
+it's written to the distribute file system.
+And not to the local file system of the reduced worker.
+Since, the output is written to the distributed file system.
+The output is not lost even if the reduce worker fails.
+So, only in-progress tasks need to be set to idle.
+While completed tasks don't need to be redone.
+Right? And so, the and
+once again the Idle reduce tasks will be restarted on other workers eventually.
+What happens if the master fails?
+If the master node fails, then the map reduce tas, task is aborted.
+The client is notified, and
+the client can then do something like restarting the map reduce task.
+So, this is the one scenario where the task will have to be
+restarted from scratch.
+Because, the master is typically not applicated in the Map-Reduce system.
+So, you might think that, this is a big deal, that that the, the master
+failure means the the map-reduce task is aborted, and the task has to be restarted.
+But remember, node failures are actually, rather rare.
+A node fails actually recall once every three years, or once every 1,000 days.
+And the master is, is a single node, and therefore, the chance of the master
+failing is actually quite, you know, it, it, it's quite an uncommon occurrence.
+the, the, the problem that you have with if,
+you have a multiple workers associated in, in a map reduce task.
+It's much more likely that, one of many workers failed,
+rather than the master failing.
+So, the final question to think about is,
+how many map and how many reduced jobs do we need?
+[NOISE] Supposed you know, they're both throughout M map tasks and R reduce tasks.
+Our goal is to determine M and R.
+The, this is part of the input that given to the map reduce system to let it
+know how many tasks tasks it needs to schedule.
+The Rule of thumb is to make M much larger than the number of nodes in the cluster.
+[][You might think, that it's sufficient how one map task per node to the cluster.]
+[][But, in fact, it the rule of thumb is to have one map task per DFS chunk.]
+[][The reason for this is simple.]
+[][Imagine, that there is one map task per node in the cluster and]
+[][during you know during processing the node fails.]
+[][If a node fails then that map task needs to be rescheduled.]
+[][On another node in, in the cluster when it becomes available.]
+Now in, some, since all the other nodes are processing, you know,
+one of the map tasks has to, one of those nodes has to complete before this map task
+can be scheduled on that node and so, the entire computation is slowed down.
+By the time it takes to com, you know, complete this map task.
+The failed redo the failed map task.
+[][So, if instead of one map task on a given node, there are many small map tasks on]
+[][a given node, and that node fails, then those map tasks can then be spread across]
+[][all the available nodes and so the entire task will complete much faster.]
+On the other hand, the number produces R is usually smaller than M and
+is usually even smaller than the total number of nodes in the system.
+And this because the the output file is,
+is spread across spread across R node where R the number of reducers.
+And if it's usually convenient to have the output spread across
+a small number of nodes rather than across a large number of nodes.
+And so usually R is set to a smaller value than M.
+
+
+
+
+
+
+# 4. Combiners and Partition Functions (12:17) [Advanced]
+
+Welcome back to Mining of Massive Datasets.
+In the previous lectures we studied the Basic Map-Reduce model, and
+then we looked at how it's actually implemented.
+In this lecture, we're going to look at a tuples of refinements to the basic
+Map-Reduce model, that can make it run a bit faster.
+[SOUND] The first refinement we're going to look at is combiners.
+Now, one of the things that you may have noticed in the previous examples, was that
+the map task will produce many pairs of key value pairs with the same key.
+For example popular word, like the, will occur in millions and
+millions of key value pairs.
+Now, remember that the map tasks are actually happening in
+parallel on multiple worker nodes.
+And the, the key value pairs from each map node have to
+be shipped to to, to reducer nodes.
+If you sort of imagine a word like the, the on, on node 1,
+map task 1, it's probably going to see a few thousand occurrences of the word the.
+And map task 2 is going to see a few thousand occurrences of
+the word the, and so on.
+So the output of map task 1,
+will have let's say 1000 tuples, with the key the and value of one.
+Now all these,
+tuples will have to be shipped over to let's say to the new task 1.
+.
+Now, by shipping a thousand tuples over all of whose you know, keys are the,
+all of whose values are one it's a lot of network overhead.
+And, you can save some of this network overhead by doing an intermediate sum
+in the, in the map worker.
+For example, if we're sending thousand tuples that each say, that,
+that each have the key the and the value of one.
+You can send a single tuple that has the key the and the value of 1000, right?
+And so, you can save a lot of network bandwidth by doing a little bit of
+pre-aggregation in the map worker.
+Here's a mapper and the mapper is this is about code example again.
+The mapper the we, has b occurring once, c occurring once,
+d occurring once, e occurring once.
+D occurring once and b occurring, once again.
+And now the, the tuple b occurs two times here having in the output of this mapper.
+So, l,
+the combiner which is another function that is provided by the programmer.
+Combines the two occurrences of B, and produce a single tuple,
+B comma two which is then shipped, shipped over to the reducer.
+Since, we have two tuples of the form B1 being shipped over to the reducer,
+a single tuple of the form B2 gets shipped over to the reducer.
+And this way much less data needs to be copied and, and shuffled.
+So the, the combiner is actually also supplied by the programmer.
+The programmer provides a function combine.
+The input to the combiner is is, is a key and a list of values.
+And the output is a single value.
+So, instead of a whole bunch of tuples with the key k
+being shipped off to a reducer.
+Just a single tuple with key k and v2 is shipped off,
+to the reducer now usually the combiner is the same function as the reducer.
+So, if for example,
+if a reducer adds up its input values the combiner does the same thing as well.
+Further, we have to be careful, because this trick of using the combiner
+works only if the reduce function is commutative and associative.
+Let's look at a couple of examples to see what what I'm saying here.
+So for example, let's say the, the reduce function is a sum function.
+You want to add up all the input values, as in the count example.
+Now the, the sum function actually is commutative and
+associative; by which we mean, that, a plus b.
+Is b is the same as b plus a.
+And a plus b plus c is the same as a plus b plus c.
+This is the first property is the commutative property.
+And the second property the associative property.
+And because sum satisfies both these properties sum can be used as
+a combiner as well as a reducer.
+What that really means,
+is that if you have a lot of values that need to be summed.
+All these values need to be added up.
+We can break it up into two pieces.
+You you can sum up the first piece.
+You can sum up the second piece.
+And then you can sum up the, the two intermediate results and you'll get the,
+you'll get the proper, you'll get the same, same answer.
+Okay, right, so, and so this is the first combiner sums up the, the, the, the first,
+set of output with the second, combiner sums up the second set of outputs.
+Then you sum up the two intermediate values, and you
+get the same result as if you had summed up all the original values to begin with.
+So, that trick works, because the sum is commutative and associative.
+However, there are some functions that are not commutative and
+associative, an example.
+Might be average, right?
+Let's say the reducer needs to compute the average of the, of its setup input value.
+So this is, so the setup input values consist of a,
+a key, followed by a bunch of values.
+And the combiner the reducer needs to find the average of this set of values.
+Now, lets say, we divide this set of values into two sets.
+Compute the average of the set.
+Compute the average of this set, let's say that's average 2.
+And now we take the average of average 1 and average 2.
+That's the average of average 1 and average 2.
+Now, it turns out that this is actually not.
+The same as the average of all the values that are out there.
+So, the average function that we've seen is not commutative and associative.
+And so, you can't use it as a combiner.
+But it's turn out you can still use the combiner trick if you
+are a little bit careful instead of using average as your reduced function.
+If the reduce function instead outputs you know,
+outputs a pair, which consists of sum and
+count, okay?
+Then the average can be computed in 1x plus trap,
+it's just the sum divided by the count.
+So if, if the combiner ends up sending the average of all its values.
+Let's say the key [SOUND] and values and here are the chunks.
+Now the combiner, the first combiner,
+compute the sum of this piece, and the count of this piece.
+The second combiner, compute the sum of this piece, and the count of this piece.
+And the third combiner, compute the sum of this piece and the count of this piece.
+And the, finally all these all these values,
+the sums of the counts get shipped to the reducer.
+And the reducer computes the final sum.
+Which is sum of the, the, the intermediate sums it has received.
+[SOUND] The final count, which is the sum of all the counts that it has received.
+[SOUND] And divides the sum by the count, the final sum by the final count.
+That, in fact, turns out to be the correct average.
+So, using this using this trick of using sums and counts
+it's sometimes possible to turn a function that's not commutative or associative.
+Break it down into functions that are communicative or associative like sum and
+count and still use a combiner trick to save some foot traffic.
+Unfortunately it turns out that while while most functions are amenable to
+the combiner trick.
+There are some functions that don't work with the combiner trick at all.
+One example is is median.
+Right? The median of a set of values is obtained
+by sorting you know, [INAUDIBLE] sorting that set of values.
+And then finding the middle, the middle value in that, in that sought it list.
+It turns out and it can be prov
+minuen mathematically that there is no way to split the median competition.
+Into a bunch of commutative and associative computations.
+So you can't actually use the combiner trick if your goal is to
+come through the median of a set of values.
+You just have to ship all the values to the reducer and
+compute the median at the reducer.
+The next refinement we are going to look at is the partition function.
+Now, remember that the map reduced infrastructure
+uses a hash function on each key in the intermediate key value set,
+and this hash function decides which reduced node that key gets shipped to.
+The map reduce system uses a default partition function which consists of
+hashing the key using a pre-defined hash function.
+And then taking the result modular R.
+Now, this gives a number from zero to R minus 1 which
+decides which reducer the key is sent to.
+Sometimes you may want to override this partition function with a custom
+partition function.
+For example. For example, you might want to ensure
+that all the URLs from a given host that say end up in the same output file.
+And are therefore sent to the same reducer.
+So instead, of hashing by key, you might want to hash by the host name of the URL
+and the map reduce framework allows you
+to specify the custom partition function that can do things like this.
+The initial implementation of MapReduce was done at Google.
+And Google first implemented a file system called the Google File System which is
+a distributed file system that provides table storage on top of its cluster.
+And then implemented the MapReduce framework on top of
+the Google File System.
+Google's implementation MapReduce is not available outside of Google.
+Hadoop is an open-source project that's a reimplementation of Google's MapReduce.
+It uses a file system called HDFS for stable storage.
+And it's implemented in Java.
+Hadoop is an Apache project.
+And you can freely download it from the Apache website.
+It turns out that many use cases of Hadoop involve doing
+SQL-like manipulations on data.
+And so there are open-source implementations called Hive and
+Pig that provide SQL-like abstractions of top of the Hadoop and
+MapReduce layer, so that you don't have to rewrite those as map and deduce functions.
+That finally wrap up by looking at Map Reduce in the Cloud.
+Amazon's Elastic Computer Cloud, for
+example, is one example of a service where you can rent computing by the hour.
+And Amazon also has an implementation of Map Reduce called
+Elastic Map Reduce that you can run in the Cloud.
+This concludes our discussion of Map Reduce.
+
+
+
+
+
+
+
+
+
+
+## Course  /  Module 2: PageRank  /  Outline of Module 2
+
+# README
+
+![](C:/Users/qp/Pictures/Screenshots/CSX0002 - Outline of Module 2 - README.png)
+
+
+
+
+
+# 5. Link Analysis and PageRank (9:39)
+
+So, today we will start with with a new topic and
+we will start looking at the Analysis of Large Graphs.
+And in particular, we will talk about Link Analysis and PageRank.
+So here is the idea.
+So, so far, this is how the class fits together and
+we are starting with a new topic with a new set of data that is the Graph data.
+And in this module of the class.
+We will look at link analysis methods, like PageRank and SimRank.
+We will look at Community Detection with,
+where the idea is that we want to find clusters of nodes in the network.
+And then we will also look at Spam Detection, where the idea is that we
+want to identify nodes that are spam, spam nodes in the graph.
+So those are the three modules for the Graph data section.
+If we think about graphs, graph, graphs are everywhere.
+In a sense that for example, social networks Facebook Twitter and
+things like that.
+Can very naturally be represented as graphs.
+Graphs in a sense of as a set of nodes and
+a set of edges or connections or intersections between them.
+Another set of data points that also can be represented as
+graphs are social media networks.
+For example here, in this graph.
+What, what I'm showing you is is an illustration of the structure of
+the United States blogosphere around the Presidential Election in 2004.
+And what you see is basically these two clumps in this network.
+These two communities and they basically correspond to the two
+political parties in the United States system.
+And you see how this class, the nodes in one cluster then link
+into the other cluster and there is some number of cross-linking between the two.
+So there is some amount of polarization in a sense.
+Another word, another set of data that can actually be
+represented as networks are the networks of information.
+So for example, in this, in this case,
+what we are seeing here is a map of science.
+So here every node is a, is a different journal and or a different conference.
+And now the edges between these journals are publication menus I mean,
+that one journal is citing the other journal.
+So based on this citation network between journals,
+we can basically visualize how different disciplines of science and
+sub fields of science, how they're relating to each other.
+Of course, internet is another case where that can be studied as a, as a graph.
+So here, we have computers or routers talking to each other.
+And again, this can be represented as a dynamic network of nodes which
+represent computers or routers.
+And then let's say, physical links or between, between these machines and
+those are the edges of the network.
+Of course, kind of the technological networks are also the,
+the oldest example of graphs people have been studying.
+So for example, the, the field of graph theory goes, goes back to 1700s
+when Euler posed this problem about the seven bridges of, of Konigsberg where
+the idea is that we want to cross at some point and travel each bridge only once.
+And the question is can that be done?
+And this can be formulated as a, as a graph problem.
+And examples of other technological networks, for
+example are power grids, road networks water distribution networks and so on.
+And it's, it's important for us to understand the structure of these networks
+to detect failures to, to detect disease outbreaks or contaminations and so on.
+Another example of a big part of kind of networks is, is the web.
+Right. So web itself,
+can be represented as a graph.
+And what we will do today,
+we will kind of focus on the structure of the web graph and we will
+develop methods that allow us to learn something about the, the pages on the web.
+So the first question is how do we represent web as a graph?
+We will represent web as a directed graph.
+So we now will graph nodes will be, will correspond to web pages.
+So every web page will be, will be a node in this graph.
+And now we will have directed links between these web pages that
+correspond to hyperlinks.
+Right? So if I have my example here,
+I have a set of four web pages.
+And now these web pages contain hyperlinks.
+So in this case, a particular,
+a particular webpage points to another, another page via a hyperlink.
+So we can use now this hyperlink relationships to create a network.
+All right. So here is a small example,
+if I show you a bigger example.
+You could, think of the university website as a big giant graph of
+web pages citing or referring to each other via the use of hyperlinks.
+Right. So we
+just represented the web as this network.
+The question is how is the web organized?
+The, the way people tried to approach organizing the web was to
+human naturally created by humans.
+So for example, Yahoo back in 1996.
+Their original idea was to take all the web pages on the web and
+manually categorize them into a set of categories.
+So for example here, I have a screen shot of the web page and
+you see that the top category was for example arts.
+There was business.
+There was education.
+And each of these categories had further subcategories.
+So the idea was to take every web page and
+categorize it into, into this giant hierarchy.
+Of course, time showed that the web was growing far, far to quickly so
+this, this did not scale.
+So the next way how to organize the web and
+how to kind of find things on the web is the web search.
+And this is what kind of what we use today.
+And what is interesting in terms of the web search is that there is lit,
+literature in particular the field of information retrieval.
+That covers the problem of how do we find a document in a large set of documents.
+Right? So in our case of the web,
+we can think of every web page as a document.
+The whole, the whole web is one giant corpus of documents and
+our goal is to find a relevant document to a given query in this huge set.
+However, traditionally the information retrieval field was interested in finding
+these documents in relatively small, small collections of trusted documents.
+So for example, like newspaper collections or pap patent collections and so on.
+However, the web is very different.
+The, the difference is first, that the web is huge.
+And the second thing is the web is full of untrusted documents, random things,
+spam, unrelated things and so on.
+So the, the big question on the web is which,
+which web pages on the web should we trust?
+Which web pages are kind of legitimate?
+And which are, which are fake and irrelevant?
+And this is what we will be looking at today.
+Is how do we identify set of relevant or trustworthy web page,
+web pages in this huge web graph.
+So, when you are doing the web search, there are two that,
+that there are two challenges.
+Right?
+So as I mentioned, the first challenge is who do we trust on the web?
+Right?
+How do we know which are, which web pages are legitimate and which web pages are,
+for example, spam or somehow fabricated on the web?
+The idea here is that we will use the structure of the link web graph
+to understand these things.
+So the idea is kind of that trust,
+trustworthy web pages will link to each other.
+And we will build on this idea to exploit it to be able to
+identify the page rank algorithm.
+And then, the other problem that happens on the web is that
+sometimes queries can be rather ambiguous.
+For example, you can ask, what is the best answer to a query newspaper?
+And there is really kind of no, no good answer to this query.
+And the, the, the,
+goal here if you want to identify all the good newspapers on the web.
+Is to again, look at the, at the web structure of the of,
+of the structure of the web graph in order to identify the we, the set of pages.
+Or a set of newspapers that are linking to each other.
+And again, get, get the result out of the structure of the web graph.
+So these are the two challenges we will address in today's lecture.
+The way we can address both of these challenges is to basically realize that
+the web as a graph has very reach structure.
+So one thing that we can do is we can try to think of this problem
+abstractly as a way to rank nodes of forbidden graph.
+So basically, we would like to compute a score or
+an importance score of every node in this web graph.
+And the idea is that some nodes will collect lots of links, so
+they will have high importance and
+some other nodes will have a small number of links or links from untrusted sources.
+So they will have low importance.
+So that's the, that's the thing we want to compute.
+So, in order to compute the importances of the nodes in a graph.
+There are several approaches to this.
+Broadly, these approaches are called link analysis.
+Because you're analyzing the links on the web graph to in,
+to compute an important score of a node in a graph.
+So the b, the first approach we will look at, it's called Page Rank.
+And this is really the algorithm that was, that was invented in that
+behind the initial implementation of the Google Search engine.
+Then we will take a look at also at another algorithm that
+is called Hubs and Authorities.
+Here the idea is that we have two types of web pages.
+In our web graph, we have the web pages that are called Hubs.
+And we have web pages that are kind of called Authorities.
+That are good authorities for given topics.
+And then, we will look at some extensions of these algorithms.
+First, in terms of topic-specific or what is also called as Personalized Page Rank.
+And we will also use these ideas and apply them to web spam, spam detection.
+Where basically spammers may want to manipulate the structure of
+the web graph in such a way to, to make some web pages to,
+to seem important even though they are not.
+So basically, boost importance of some of the web pages.
+
+
+
+
+
+# 6. PageRank: The Flow Formulation (9:16)
+
+So, the first approach to computing importances of the web
+pages in a big web graph, is called PageRank.
+So what we will do now is we will come up with the first mathematical
+formulation of PageRank.
+We will first talk about it intuitively, then we'll mathematically formalize it.
+We will then talk also about how to compute,
+actually compute the important scores.
+And we will see that our initial formulation is broken, so
+we will then later fix it.
+But for now, we will, we will just come up with the initial formulation and
+this is called the flow formulation for the PageRank item so here is the idea.
+The idea is we think of links on a web graph as votes, right?
+So the idea is that the page quote on noting a graph is as
+important as the number of links it gets.
+Of course, the first question is what kind of links are we talking about?
+Are we talking about in-links?
+Are we talking about outgoing links?
+For example, we will look at in-links.
+In-links because in-links are kind of harder to fake than out-links.
+It's very easy to have a page with lots of out-links.
+It's harder to have a page that lots of other pages on the web point to.
+So that's the first question.
+The second thing is that, it's not enough just to consider in-links, but
+we also have to consider where this link is coming from.
+So for example a link from a given web page maybe from stanford.edu is more
+important than a link from some other web page that only receives very few in-links.
+Right?
+So the idea is that not all in-links are equal.
+Kind of links coming from important pages are worth more.
+And here, here is basically the idea.
+The idea is that an importance of a page is, is the,
+in some sense, depends on the importances of other pages that point to it.
+So it kind of, we have this recursive definition where importance of your given
+page depends on the importances of the others.
+And this importance then kind of gets po, passed on further through the graph.
+So this is the first idea and
+just to give you how an intuition, how PageRank scores of a graph look like.
+Here in this slide I'm showing you a,
+a small, a small graph with a set of directed edges.
+And here in this graph, the size of the nodes is proportional to it's
+PageRank scores and here I normalize the PageRank score so that they sum to 100.
+And what do we see is the following.
+We see for example that, that node B has a very high PageRank score.
+The reason why it has high PageRank score is because it has lots of,
+lots of other pages point to it.
+For example, node C also has relatively high PageRank score,
+even though it receives only a single incoming link.
+The reason why C has a high PageRank score is because this very important node B
+is pointing to it.
+And then for example, you can see that this very small dark red
+links nodes have a relatively small PageRank scores.
+For example, the PageRank score of node D is higher than the PageRank of
+node A because D points to A.
+For example, we see that the node E has kind of intermediate PageRank score.
+And E points to B and so on.
+Right? So the results that we get
+from PageRank are kind of intuitive and they correspond to
+our intuitive notion of how important is a node, is a node in a graph.
+So now, what we look at this how do we compute this kind of scores or
+importances of nodes in a graph?
+So the idea is the following.
+The idea is that we will come up with a Simple Recursive Formulation.
+Where we sh, where we sh, think of each link as a vote.
+And we think of the importance of a given vote, to be proportional to
+the importance of the source web page that is casting this vote or
+that is creating a link to the destination.
+So the way we think about this is the following.
+Let's think we have a page j with an importance r sub j.
+And for this leg importance be some number.
+And think that n, that the page j has n outgoing links.
+Right? So then, the way we will do,
+say is that now this importance rj of page j.
+Basically, gets split on all of its outgoing links evenly.
+So, the each link gets r sub j divided by n votes or
+amount of importance to spread to the target.
+So, so now this is how the importance gets from j to the pages it points to.
+And in a similar way, we can define the,
+the importance of j as the sum of the votes that it receives on its in-links.
+So, if we look at the simple graph here at the bottom.
+The idea is that the importance r sub j of web page j
+is simply the importance of page i the green page.
+Divided by three because page i has three out-links plus
+importance of page k divided by 4.
+Why by four?
+Because page k has four out-links.
+One, two, three and four.
+So this is how we compute the pa, the score of of page j.
+And now that we have the score of page j,
+the score further gets propagated outside of j along the three outgoing links.
+So each of these links, gets the importance of, of node j divided by 3.
+And this is basically all that is to this formulation.
+As every node collect importances of the pages that points to it.
+[INAUDIBLE] has its own importance and
+then kind of propagate it through, through their neighbors.
+So the idea is that basically this vote flow through the, through the network.
+So that's why this is called the flow formulation of a flow model of PageRank.
+And just to give you an idea how this would work out.
+Here is a very small web graph, you know,
+from prehistoric times when the web only contained three websites a, m and y.
+And imagine that this is this is the structure, right?
+So y has a self link and then points to a.
+A points points to m.
+M points backwards and so on.
+And our initial idea as said before is the vote is,
+is from an important page is worth more.
+So, a page is more important if it's pointed to by other important pages.
+So as I,
+as I kind of, I hinted on the previous slide, we will assign an important score.
+R to a page j and we will call this important score rank.
+So this is where the PageRank terminology comes from.
+So we, we call this importance to be rank.
+And now, the, our formula that we have for computing PageRank is very simple.
+We simply do say that the importance score of page j
+is simply the sum of all the other pages, i that point to it.
+Importance of that page i divided by the out-degree of the page.
+Right?
+So now, what they can do is basically dismiss it for
+every node in the network, we obtain a separate equation.
+So, for example,
+the importance of node y in my network is simply the importance of y divided by 2.
+Plus importance of a divided by 2.
+So why is that?
+Because y has two outgoing links.
+One link points, points to itself so it's y divided by 2.
+And then similarly node a has two outgoing links.
+So, we take our a and divide it by 2.
+For example, if you say, what is the importance of node m?
+The importance of node m is importance of node a divided by 2.
+Again, why divided by 2?
+Because node a has two outgoing links and half of the,
+half of its importance goes to a.
+And half of its importance goes to, goes to y, as we saw here.
+Right? So now, it almost seems like we are done.
+Right? We have this set of equations that we
+would like to solve, right?
+We have three equations, three unknowns, no constraints and we want to solve this.
+The problem is that this has no unique solution.
+The reason is that the, the system is under constrained.
+So basically, all solutions will, will be,
+we can find an infinite set of solutions to these set of equations.
+And all, what these solutions will have in common?
+They will be equivalent up to the scaling factor.
+So we need, we need an additional constraint.
+So the constraint we will add to our system is to say that our
+paging scores half to sum to 1.
+So r, ry, ra plus rm has to be equal to 1.
+So now, we list additional equation.
+We can basically have now, three unknowns for equations.
+We can go solve this.
+For the small graphic, we can go solve this by hand.
+And we would come up with the, with the,
+with the solution which are our initial page, PageRank scores.
+Right. So for example y has score of 5 over 2.
+A has score of 5 over 2 and then m has score of one-fifth.
+Right? So, it seems like as, that we are done.
+Right? So we could use any kind of linear system
+equation solving method.
+For example, Gaussian elimination.
+And be able to compute the importances of nodes in the graph.
+You know, this approach would work well for very small graphs, but it won't,
+it wouldn't, it won't work for a, for a size of the web graph.
+So basically, for a graph where we have a billion web pages because it
+would mean that we have a billion of equations.
+A system of billion of equations that we would want to solve.
+So we need a different formulation.
+
+
+
+
+
+# 7. PageRank: The Matrix Formulation (8:02)
+
+So, in order to come up with a different mathematical formulation of
+this basic idea of modelling the flow,
+we will first define what we will call our stochastic adjacency matrix M.
+And then we will express everything in terms of linear algebra.
+In terms of basically the ranks and this matrix M as vector matrix multiplications.
+And we will later why this is good because we will be
+able to start using the linear algebra tools to implicitly solve the system of
+equations that I showed on the previous slide.
+So here is how we proceed.
+Our goal is to define the stochastic matrix M,
+that will basically be an adjacency matrix.
+Which basically means,
+we want to take the graph and represent it as a big matrix of values.
+And the idea is that if a page i points to page j then
+we will have a non-zero entry in the cell ji, and if there is, if the page,
+page j does not point point to page i then we, we will have a 0 entry there.
+So now the question is what is the value of the non-zero entry in,
+in the cell of the matrix.
+So the idea is if i points to j then the corresponding entry ji in
+the matrix M will be o over the f the out degree of the, of the source node.
+So out degree of node i.
+Here you will already seen what kind of where we are going right?
+Before we said that whatever is the importance of a node,
+this importance gets evenly split along all of its out-links.
+So this means that, that the, all the out-links of node i,
+will have the weight 1 over di.
+So this means that our matrix is called column stochastic.
+This means that every column, every column in our matrix, sums to 1.
+Okay, so now that we have the whole graph represented as a matrix you
+can also take all the page rank scores of nodes and represent that as a vector.
+Okay.
+So the way we do this is that we think that we have one entry in
+our vector per page, we can think that our pages are numbered 1,
+2, 3, 4, 5 up to N so we have a vector length N.
+And every entry in this vector basically corresponds to
+the page rank score of a given, of a given page.
+Okay? So that is all good and the other thing we
+know from before is that the sum of the entries of our vector equals to 1.
+That was the constraint of the flow equations we had,
+we had on the previous slide.
+So now what is interesting is that we can take our flow equations,
+kind of our basic equation.
+And write it as a in terms of the matrix M and the vector r.
+So we can write it as rank vector r equals the matrix M times the vector r again.
+So now we basically have a big system of equations, right?
+M is fixed and we want to figure out what are the values of r.
+So just to convince you or demonstrate why, why, why we can take our initial fl,
+flow equations and express them into this vector matrix product.
+This may not be obvious, so here is how,
+how we can understand that what we are doing is actually true and correct.
+So the idea is the following, right?
+Imagine that I have my matrix M here at the bottom, and I have my vector r.
+And now I am multiplying M times r.
+And just for the sake of the example, let's assume that page I has the,
+has the degree, out degree of i equals 3, and
+it also points, which means it points to three other pages, including j.
+This means that for a page i,
+the col, the i-th column of matrix M will have three non-zero elements.
+Here are indicated by squares, and each of these,
+each of these three non-zero cells will have a value of one-third right?
+1 over the out degree of node i.
+So now imagine what happens when I take the j throw and
+multiply it with the vector r.
+When I'm, when I'm scanning across the row here and
+I'm scanning down the vector, the vector, the vector r.
+I'm basically computing the page rank score of node j, right?
+The page rank score of the node j is the sum of the importances that are stored in
+r, times the out degree of that node that points to j.
+So this way basically we take this initial equation that we,
+that we had before and we express it as a vector matrix product.
+So now we basically took our flow formulation of the problem and expressed
+it as this recursive, in a sense, matrix equation of r equals M times r.
+Now, what we observe is that this looks very much like an kind of
+Eigenvalue or problem.
+So let me just remind you what are Eigenvalues and
+eigenvectors of a given matrix.
+Right? So if I have a matrix A then x
+is called an eigenvector with the corresponding eigenvalue lambda.
+If x is a solution to the equation, A times x equals lambda x.
+Okay? So, just saying it again.
+A is a matrix that we, that we are given.
+X is something that we'd like to compute and it's a vector.
+And lambda is also something that we'd like to compute, and is a scalar.
+Is a, is a real number, or a complex number.
+So, the point being is that x is an eigenvector,
+y is a eigenvalue, if they are solution to this equation Ax equals lambda x.
+So in, in our equation looks very much similar.
+Like, at least have M times r which is the same as kind of A times x.
+And then we say equals r, and before we had equals lambda x.
+So what this means,
+is that a rank vector is an eigenvector of the stochastic web matrix M.
+And another important fact is that it is a principal eigenvector.
+Which means that it corresponds to the eigenvalue with value 1.
+Right, so, here I can see that I implicitly multiply by 1 and
+my lambda is 1.
+Right?
+In fact the large, largest eigenvalue of M is once, is,
+is 1 exactly because M is column stochastic.
+Why is that the case?
+That's the case because vector r has a unit length.
+Meaning its coordinate sum are non, are non, are non-negative and they sum to 1.
+And each column of M also sums to 1.
+So M times r will be the, the value of that product, of that dot product,
+will be at most at most 1.
+So this means that the that the corresponding eigenvalue the largest
+eigenvalue of our matrix is 1, okay.
+So why did, why did we do now.
+So far we took our graph represented it represented it as this big matrix,
+and we reformulated our flow equations into this matrix formulation and
+now we establish the connection between the matrix formulation and
+the eigenvalues and eigenvectors of matrix M.
+So, what, what this now means is basically instead of
+thinking of this as solving a system of equations, we can think of,
+of our problem as finding the eigenvector of, of matrix M.
+And actually there is a very efficient method for
+finding eigenvectors of a given matrix.
+And this method is called power iteration.
+So now we actually know how to compute page rank.
+The way to compute page rank is to find the, the eigenvector of matrix M
+that corresponds to the eigenvalue of value of 1.
+So that's what we learn so far.
+So now the, we can actually go an compute the thing.
+So let me show you what we have so far.
+We have our little graph web graph on three nodes.
+We have our flow equations.
+And we also now can write what the structure of our matrix-m.
+Here is the structure or our matrix-m.
+Notice that the matrix is really column stochastic.
+So now, what we can, what, how we can think of our flow equations,
+we can think of them as this vector matrix product, right?
+So r, r equals M times r.
+
+
+
+
+
+
+# 8. PageRank: Power Iteration (10:34)
+
+And now the question is how do we compute, how do we compute the eigenvector to the,
+to the, or the solution to this problem r equal N times r.
+So the way we, we proceed is the, is the following.
+So the method is called the power iteration method and
+it assumes that on the input we are given a big web graph on N nodes.
+Where nodes are red pages and directed links correspond to hyper, hyperlinks.
+And then we think we, the power iteration is a very simple iterative scheme.
+The way the, the whole thing works is the following.
+We will start with our vector r, I, I, I have this subscript r of 0, which simply
+means that this is the, this is measuring the time, how the iterations proceed.
+So r our initial guess of our ranking
+vector r is simply that all the components of it are 1 over N.
+So, where N is the number of nodes.
+So naturally the compo, the comp, the entries of r sum to 1.
+So now all we do is we iterate our, our recursive equation.
+So we say that values of r at time t plus 1 is the matrix M, the,
+the stochastic adjacency matrix, times our previous vector r, r, r t.
+And we keep iterating this.
+And basically all we are doing is we are iterating this r equals M times r.
+And we keep iterating this until r stops changing.
+So this means we keep iterating this until this sum of the, let's say,
+coordinate wise sum of the differences between the r of the current time step and
+r of the previous time step is less than epsilon.
+Right?
+So, and this is really, really all there is to the, to the page rank algorithm.
+We start with some guess of how our vector rank vector r is,
+then we multiply it with M usually around 50 or 100 times.
+And we keep monitoring how much does r change from one iteration to another, and
+when it stops changing, we stop.
+And, what we get is the page rank scores.
+So, of course if we have if we have this this algorithm,
+the question is how, how is this working?
+So let me just give you, give you an example using our old web graph idea.
+So, we have the three node web graph.
+We have, we have our matrix M here.
+We have the algorithm here on the left, a simple iteration as I mention before.
+And let me show how this would work.
+So, for example we start with r0 which is where the components of it are one-third,
+one-third, one-third.
+We multiply it with them and in the next time snap, so
+this will be r1, we would get the new vector.
+And then we could, we now compute r of, r, r of time 1 times M,
+we obtain r at time 2, and then again we would go multiply that again with M,
+would get r at time 3, and we would keep doing this.
+And at the end, r would actually converge to, to a vector that I will
+show you here where A and y nodes would
+have the importance of 6 over 15 and y would have the importance 3 over 15.
+Which is exactly the same values as we got before when we were actually trying to
+explicitly solve our system of flow equations, right?
+6 over 15 is the same as 3 3 over 3
+over 2 over 5 and 3 over 15 is 1 over 5.
+All right? So we got to the same solution as we had,
+as we got before when we were trying to solve a system of equation.
+But now we didn't really kind of solve the system of equations explicitly,
+we simply did this vector matrix multiplication multiple times.
+And the thing converge, converged somehow mira,
+miraculously to the values we wanted.
+So, so far we looked at page rank in terms of a matrix formulation.
+So we, we express the set of flow equations as a vector matrix product, and
+then we saw that, instead of solving the flow equations, we can kind of find the,
+the eigenvector of a matrix M, in this way find the page rank scores.
+So what we will do next is we will look at
+an interpretation of what the page rank scores mean.
+And this is called a random walk interpretation.
+So basically we will see that page rank scores are equivalent to
+a probability distribution of our random walker in a graph.
+So, before I tell you the details, here is, here is a way how to think about this.
+We are thinking about the web graph as a giant graph and
+we are thinking about the, the the surfer.
+So a surfer is simply a person who is basically randomly surfing this graph.
+Which means that a, a surfer comes to a given web pages, web page, looks at all
+the outgoing links, peaks one at random and, and moves to the next web page.
+And the server is kind of browsing these graph indefinitely.
+So the idea is that at some given time t, surfer is at some node i, and
+what the surfer will do in the next time step at time t plus 1,
+basically the surfer will follow an out-link from i, and
+choose this out-link uniformly at random out of all the out-links at of node i.
+Okay?
+And then, now the surfer is at node j.
+So what time t plus 1 surfer is at node j, and
+again looks at all the outgoing links of node j and follows one of them at random.
+So now what we can also think about is, we can think of this vector p of t.
+And this p of t can, we can, we, we think of this as a probability distribution over
+the nodes of the graph, which basically tells us with what probability is a given,
+is a walker at time t at the given node.
+Okay. So we
+can see that we every node in a graph has a value associated with it.
+And this value corresponds to the probability that at a given time t,
+the, the random walker is at that given node.
+Okay.
+So now that we have defined the process and we have defined the notion of p of t.
+Now the next question is to ask,
+where is the random walker going to be at time t plus 1?
+Okay?
+So given, given the probability distribution where the random walker is at
+time t, that is called p of t,
+the question is, where is the random walker going to be at the next time step?
+And the answer to this is actually very, very intuitive.
+So, we can ask,
+what is the probability that the random walker will be at node j at time t plus 1?
+So if we want to compute this, then all that for
+node j what we have to look at is what are all the nodes that point to j.
+What is the probability that the random walker was at any of these nodes i,
+that point to j?
+And at every node i, the random walker basically has to go and
+take, take this link that points towards node j.
+So this means that whatever is the, was the, was the,
+was the probability that a given node that the random walker was at a given node.
+Now the random walker has to pick the out-link that points to node j.
+So which means that, that what we are basically getting is,
+is exactly our page rank equation if you, if you want to think about it this way.
+Right so, so the probability that the random walker is at the given node.
+Is simply the sum of the probabilities that the random walker in previous time
+step was at the neighbors that point to given node.
+And from every given node, the, the random walker transitions to the node j
+with probability of 1 over the, 1 over the out degree of that given node.
+Which is exactly the page rank the page rank formulation.
+Right? So this means that the probability
+distribution of where the random walker is either time t plus 1 is simply our matrix
+M times the probability distribution where the random walker was at time t.
+So now let's suppose the following.
+Let's suppose that the,
+that the random walk reaches what is called the steady state.
+Which means the probability distribution at time t is,
+equals the probability distribution of time t plus 1.
+This means that probability, p of t is a stationary distribution.
+So, probability solution at time t plus 1 equals M times p of t equals back p of t.
+Okay?
+So what we, what we observe now is that this stationary,
+stationary probability distribution p of t is,
+is exactly what was our, our original formulation of a of a random walk.
+What before we had r equals M times r.
+Now we have p of, p of t equals M times p of t.
+Right? So this means that our rank vector r
+is a stationary distribution for this random walk process, okay?
+So, this about this a bit.
+So basically what page rank score corresponds to?
+They correspond to the probability that this random surfer,
+that infinitely long kind of walks the, walks the web graph at a given, at a,
+at some given time t resides at the given node.
+So this is what is called the page rank, the random walk interpretation of page
+rank, where we can think of a score or a rank of a given node to be the probability
+that the random walker is at that given node at some, at some fixed time t.
+So, another important consequence of this random walk interpretation is that
+there is a rich literature on random walks.
+And random walks are really called Markov processes, or first order Mark, order
+Markov processes, because basically they have very little, very little history.
+And the central, the result from the Markov processes or
+random walk literature is that under certain conditions,
+basically conditions under matrix M, the stationary distribution is unique,
+and it will eventually be reached no matter what is the,
+the initial probability dis, distribution at the time t equal 0.
+So, what does this mean?
+This means that there are certain conditions on the structure of our graph.
+On the structure of our matrix M.
+And if our matrix M satisfies these assumptions,
+then the stationary distribution we, is unique.
+Which means there is only one unique rank vec, page rank vector r.
+And this unique page rank vector r will be,
+will be achieved regardless of how we initialize it.
+Which means that our pay power iteration will always converge to the same vector,
+regardless of how we initialize it.
+
+
+
