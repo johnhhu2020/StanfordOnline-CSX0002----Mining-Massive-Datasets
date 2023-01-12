@@ -896,10 +896,10 @@ The Rule of thumb is to make M much larger than the number of nodes in the clust
 [][You might think, that it's sufficient how one map task per node to the cluster.]
 [][But, in fact, it the rule of thumb is to have one map task per DFS chunk.]
 [][The reason for this is simple.]
-[][Imagine, that there is one map task per node in the cluster and]
-[][during you know during processing the node fails.]
-[][If a node fails then that map task needs to be rescheduled.]
-[][On another node in, in the cluster when it becomes available.]
+Imagine, that there is one map task per node in the cluster and
+during you know during processing the node fails.
+If a node fails then that map task needs to be rescheduled.
+On another node in, in the cluster when it becomes available.
 Now in, some, since all the other nodes are processing, you know,
 one of the map tasks has to, one of those nodes has to complete before this map task
 can be scheduled on that node and so, the entire computation is slowed down.
@@ -946,8 +946,8 @@ will have let's say 1000 tuples, with the key the and value of one.
 Now all these,
 tuples will have to be shipped over to let's say to the new task 1.
 .
-Now, by shipping a thousand tuples over all of whose you know, keys are the,
-all of whose values are one it's a lot of network overhead.
+[][Now, by shipping a thousand tuples over all of whose you know, keys are the,]
+[][all of whose values are one it's a lot of network overhead.]
 And, you can save some of this network overhead by doing an intermediate sum
 in the, in the map worker.
 For example, if we're sending thousand tuples that each say, that,
@@ -961,9 +961,9 @@ d occurring once, e occurring once.
 D occurring once and b occurring, once again.
 And now the, the tuple b occurs two times here having in the output of this mapper.
 So, l,
-the combiner which is another function that is provided by the programmer.
-Combines the two occurrences of B, and produce a single tuple,
-B comma two which is then shipped, shipped over to the reducer.
+*the combiner which is another function that is provided by the programmer.*
+*Combines the two occurrences of B, and produce a single tuple,*
+*B comma two which is then shipped, shipped over to the reducer.*
 Since, we have two tuples of the form B1 being shipped over to the reducer,
 a single tuple of the form B2 gets shipped over to the reducer.
 And this way much less data needs to be copied and, and shuffled.
@@ -1029,7 +1029,7 @@ it's just the sum divided by the count.
 So if, if the combiner ends up sending the average of all its values.
 Let's say the key [SOUND] and values and here are the chunks.
 Now the combiner, the first combiner,
-compute the sum of this piece, and the count of this piece.
+*compute the sum of this piece, and the count of this piece.*
 The second combiner, compute the sum of this piece, and the count of this piece.
 And the third combiner, compute the sum of this piece and the count of this piece.
 And the, finally all these all these values,
@@ -1066,7 +1066,7 @@ hashing the key using a pre-defined hash function.
 And then taking the result modular R.
 Now, this gives a number from zero to R minus 1 which
 decides which reducer the key is sent to.
-Sometimes you may want to override this partition function with a custom
+*Sometimes you may want to override this partition function with a custom*
 partition function.
 For example. For example, you might want to ensure
 that all the URLs from a given host that say end up in the same output file.
@@ -1101,6 +1101,105 @@ This concludes our discussion of Map Reduce.
 
 
 
+[][Reading notes]
+![](C:/Users/qp/Pictures/Screenshots/Reducers, Reduce Tasks, Compute Nodes, and Skew.png)
+![](C:/Users/qp/Pictures/Screenshots/2.2.7 Exercises for Section 2.2.png)
+[][2.2.7 Exercises for Section 2.2]
+Exercise 2.2.1 : Suppose we execute the word-count MapReduce program de-
+scribed in this section on a large repository such as a copy of the Web. We shall
+use 100 Map tasks and some number of Reduce tasks.
+(a) Suppose we do not use a combiner at the Map tasks. Do you expect there
+to be significant skew in the times taken by the various reducers to process
+their value list? Why or why not?
+**Yes, the duplicate is each batch can be significantly diff**
+(b) If we combine the reducers into a small number of Reduce tasks, say 10
+tasks, at random, do you expect the skew to be significant? What if we
+instead combine the reducers into 10,000 Reduce tasks?
+**10 is good but 10,000 is bad, in English there are 10,000 frequently used words**
+**the word "the" will appear over ten million times with ten billion 1s**
+! (c) Suppose we do use a combiner at the 100 Map tasks. Do you expect skew
+to be significant? Why or why not?
+**the combiner will remove the duplicate in each task, thus only lifted is** 
+**the duplicate between each task, so there will be very less skew**
+
+
+[][Supplemental materials]
+![](C:/Users/qp/Pictures/Screenshots/How many reduce tasks a mapreduce job which processes 1.8TB dataset should have - 1.png)
+![](C:/Users/qp/Pictures/Screenshots/How many reduce tasks a mapreduce job which processes 1.8TB dataset should have - 2.png)
+
+
+[][Dear Community,]
+
+I have a Mapreduce job which processes 1.8TB data set. My map task generates around 2.5 TB of intermediate data and the number of distinct keys would easily cross a billion . I have set a split size to be 128MB. So, total number of splits generated is approximately 14,000/-. I have set a number of reducers to be 166. My cluster size is 8 nodes. 7 nodes are data nodes out of 8 nodes. 1 is a name node. Each data node has got 24 logical cores and 128GB RAM. When the job is running with this configuration, map completes its execution but my reduce phase stucks at 26%. May i know that what should be the split size and number of reducers i should have for this particular problem with my current cluster size. Please provide suggestions. Thanks.
+
+
+[][Lets start with basics and try to answer your questions.]
+
+1. Split size = Hdfs block size by default . changing the split size will have a impact on the number of mappers and not reducers.
+128 MB split size is good to start with.
+
+2. Rule of thumb : A reducer should process 1 GB of data ideally going by this logic you should have : 2.5TB / 1 GB = 2500 Reducers ,
+
+3. you have 20 * 7 = 140 containers(available in one go ) to run reducer , running 2500 reducers will take 2500 / 140 = 17 rounds which is a lot . Hence I will fix My reducer to some where aound 800 to 900.
+
+3. Your mappers is producing more data as intermediate , what are you doing in this step , can you use combiner(is it possible) to make this intermediate data small ? can you move some filter operation at map stage .
+
+4. If your reducer are getting stuck at 26% there can be several reason
+
+1. You have a skewed key which results in one reducer getting stuck
+2. 26% means its is stuck at shuffle phase itself , which is stating one reducer is getting a lot of data(another indication of skewed joins)
+
+3. Have you enabled compression for map output ?
+
+
+[][kgautam, Thanks for your reply.]
+
+1) Currently, I'm not using any combiner. My map phase output <key,value> pair is <string/text,string/text>. As my value is string/text in map phase output <key,value> pair, I think that It will be difficult to write the combiner. Usually,the function of the combiner is same as the reducer. Here, I'm not able to think of writing the combiner for this particular problem.
+
+2) Currently,we tried with this compression for map output "-D mapreduce.map.output.compress.codec=org.apache.hadoop.io.compress.Lz4Codec". Is this configuration enough to compress map output? Do we have to modify or write some statements in our mapreduce code to use this compression?
+
+3) May i know that where do you get this rule of thumb "A reducer should process 1 GB of data" ?
+
+4) When i have 24 logical cores in one data node, Why you have mentioned 20 * 7? I think that it should be 24*7?
+
+5) How to handle skewed key? Can i handle it using partitioner? Do we have any other way?
+
+Thanks.
+
+
+
+[][1) Currently, I'm not using any combiner. My map phase output <key,value> pair is <string/text,string/text>. As my value is string/text in map phase output <key,value> pair, I think that It will be difficult to write the combiner. Usually,the function of the combiner is same as the reducer. Here, I'm not able to think of writing the combiner for this particular problem.]
+
+Is it possible to write key , List<String> , you can byte-serialize the value , or use thrift definition to have the values together in one structure.
+
+You are saving on not emitting the same key again . Use this if your specific use case permits.
+Mapper generating more data as comped to input means , it is emitting more records as received , which means key duplication is happening (Generally speaking)
+
+2) Currently,we tried with this compression for map output "-D mapreduce.map.output.compress.codec=org.apache.hadoop.io.compress.Lz4Codec". Is this configuration enough to compress map output? Do we have to modify or write some statements in our mapreduce code to use this compression?
+
+  conf.set("mapreduce.compress.map.output", "true")
+  conf.set("mapreduce.output.compression.type", "BLOCK"); 
+  conf.set("mapreduce.map.output.compression.codec", "Use one enabled in your cluster LZ4/SNAPPY/GzipCodec"); 
+
+3) May i know that where do you get this rule of thumb "A reducer should process 1 GB of data" ?
+This is mostly used in all framework like Pig , as well as generally Reducer heap is in order of 1.5 GB . This is a default number. Please tune according to your needs .
+
+Time taken to process X amount of data = Time to spawn the process(Scheduling time ) + time to do IO from file + time to process the logic. 1 GB is the minimum size below which job spawning time is comparable to the time taken for processing.
+
+4) When i have 24 logical cores in one data node, Why you have mentioned 20 * 7? I think that it should be 24*7?
+
+I left 4 *7 containers for other services and other jobs running in your cluster. (Always good to underestimate while doing calculations for performance )
+
+5) How to handle skewed key? Can i handle it using partitioner? Do we have any other way?
+There are Many ways , best is to have a look at your skewed key and come to logical conclusion
+1. Look at Pig Skewed Join implementation (add salt to your key and then reduce twice , divide and conquer )
+2. Take top N events for a given key (If logic permits).
+
+
+
+
+
+
 
 
 
@@ -1116,11 +1215,12 @@ This concludes our discussion of Map Reduce.
 
 
 
+
 # 5. Link Analysis and PageRank (9:39)
 
 So, today we will start with with a new topic and
 we will start looking at the Analysis of Large Graphs.
-And in particular, we will talk about Link Analysis and PageRank.
+[][And in particular, we will talk about Link Analysis and PageRank.]
 So here is the idea.
 So, so far, this is how the class fits together and
 we are starting with a new topic with a new set of data that is the Graph data.
@@ -1130,13 +1230,13 @@ We will look at Community Detection with,
 where the idea is that we want to find clusters of nodes in the network.
 And then we will also look at Spam Detection, where the idea is that we
 want to identify nodes that are spam, spam nodes in the graph.
-So those are the three modules for the Graph data section.
+*So those are the three modules for the Graph data section.*
 If we think about graphs, graph, graphs are everywhere.
 In a sense that for example, social networks Facebook Twitter and
 things like that.
-Can very naturally be represented as graphs.
-Graphs in a sense of as a set of nodes and
-a set of edges or connections or intersections between them.
+Can very naturally be represented as graphs*.
+*Graphs in a sense of as a set of nodes and*
+*a set of edges or connections or intersections between them.*
 Another set of data points that also can be represented as
 graphs are social media networks.
 For example here, in this graph.
@@ -1170,7 +1270,7 @@ So for example, the, the field of graph theory goes, goes back to 1700s
 when Euler posed this problem about the seven bridges of, of Konigsberg where
 the idea is that we want to cross at some point and travel each bridge only once.
 And the question is can that be done?
-And this can be formulated as a, as a graph problem.
+[][And this can be formulated as a, as a graph problem.]
 And examples of other technological networks, for
 example are power grids, road networks water distribution networks and so on.
 And it's, it's important for us to understand the structure of these networks
@@ -1182,7 +1282,8 @@ And what we will do today,
 we will kind of focus on the structure of the web graph and we will
 develop methods that allow us to learn something about the, the pages on the web.
 So the first question is how do we represent web as a graph?
-We will represent web as a directed graph.
+We will represent web as a [][directed graph.]
+*In mathematics, and more specifically in graph theory, a directed graph (or digraph) is a graph that is made up of a set of vertices connected by directed edges, often called arcs.  Wikipedia*
 So we now will graph nodes will be, will correspond to web pages.
 So every web page will be, will be a node in this graph.
 And now we will have directed links between these web pages that
@@ -1319,7 +1420,7 @@ Of course, the first question is what kind of links are we talking about?
 Are we talking about in-links?
 Are we talking about outgoing links?
 For example, we will look at in-links.
-In-links because in-links are kind of harder to fake than out-links.
+**In-links because in-links are kind of harder to fake than out-links.**
 It's very easy to have a page with lots of out-links.
 It's harder to have a page that lots of other pages on the web point to.
 So that's the first question.
@@ -1335,7 +1436,7 @@ The idea is that an importance of a page is, is the,
 in some sense, depends on the importances of other pages that point to it.
 So it kind of, we have this recursive definition where importance of your given
 page depends on the importances of the others.
-And this importance then kind of gets po, passed on further through the graph.
+*And this importance then kind of gets po, passed on further through the graph.*
 So this is the first idea and
 just to give you how an intuition, how PageRank scores of a graph look like.
 Here in this slide I'm showing you a,
@@ -1363,8 +1464,8 @@ So now, what we look at this how do we compute this kind of scores or
 importances of nodes in a graph?
 So the idea is the following.
 The idea is that we will come up with a Simple Recursive Formulation.
-Where we sh, where we sh, think of each link as a vote.
-And we think of the importance of a given vote, to be proportional to
+[][Where we sh, where we sh, think of each link as a vote.]
+[][And we think of the importance of a given vote, to be proportional to]
 the importance of the source web page that is casting this vote or
 that is creating a link to the destination.
 So the way we think about this is the following.
@@ -1395,8 +1496,8 @@ And this is basically all that is to this formulation.
 As every node collect importances of the pages that points to it.
 [INAUDIBLE] has its own importance and
 then kind of propagate it through, through their neighbors.
-So the idea is that basically this vote flow through the, through the network.
-So that's why this is called the flow formulation of a flow model of PageRank.
+[][So the idea is that basically this vote flow through the, through the network.]
+[][So that's why this is called the flow formulation of a flow model of PageRank.]
 And just to give you an idea how this would work out.
 Here is a very small web graph, you know,
 from prehistoric times when the web only contained three websites a, m and y.
@@ -1433,10 +1534,10 @@ Again, why divided by 2?
 Because node a has two outgoing links and half of the,
 half of its importance goes to a.
 And half of its importance goes to, goes to y, as we saw here.
-Right? So now, it almost seems like we are done.
-Right? We have this set of equations that we
-would like to solve, right?
-We have three equations, three unknowns, no constraints and we want to solve this.
+*Right? So now, it almost seems like we are done.*
+*Right? We have this set of equations that we*
+*would like to solve, right?*
+**We have three equations, three unknowns, no constraints and we want to solve this.**
 The problem is that this has no unique solution.
 The reason is that the, the system is under constrained.
 So basically, all solutions will, will be,
@@ -1444,9 +1545,9 @@ we can find an infinite set of solutions to these set of equations.
 And all, what these solutions will have in common?
 They will be equivalent up to the scaling factor.
 So we need, we need an additional constraint.
-So the constraint we will add to our system is to say that our
-paging scores half to sum to 1.
-So r, ry, ra plus rm has to be equal to 1.
+*So the constraint we will add to our system is to say that our*
+*paging scores half to sum to 1.*
+*So r, ry, ra plus rm has to be equal to 1.*
 So now, we list additional equation.
 We can basically have now, three unknowns for equations.
 We can go solve this.
@@ -1456,9 +1557,9 @@ with the solution which are our initial page, PageRank scores.
 Right. So for example y has score of 5 over 2.
 A has score of 5 over 2 and then m has score of one-fifth.
 Right? So, it seems like as, that we are done.
-Right? So we could use any kind of linear system
-equation solving method.
-For example, Gaussian elimination.
+[][Right? So we could use any kind of linear system]
+[][equation solving method.]
+[][For example, Gaussian elimination.]
 And be able to compute the importances of nodes in the graph.
 You know, this approach would work well for very small graphs, but it won't,
 it wouldn't, it won't work for a, for a size of the web graph.
@@ -1473,6 +1574,7 @@ So we need a different formulation.
 
 # 7. PageRank: The Matrix Formulation (8:02)
 
+![](C:/Users/qp/Pictures/Screenshots/What is stochastic adjacency matrix.png)
 So, in order to come up with a different mathematical formulation of
 this basic idea of modelling the flow,
 we will first define what we will call our stochastic adjacency matrix M.
@@ -1774,6 +1876,1243 @@ And this unique page rank vector r will be,
 will be achieved regardless of how we initialize it.
 Which means that our pay power iteration will always converge to the same vector,
 regardless of how we initialize it.
+
+
+
+
+
+# 9. PageRank: The Google Formulation (12:08)
+
+So, so far we looked at the page length formulation,
+we looked at the linear algebra formulation, and
+we now looked at the random walk kind of intuition of PageRank.
+And we in the, in the last slide of previous lecture, we just said
+the that under certain conditions, these PageRank vector will be weak.
+So now the question is, what are these certain conditions that matrix M has to
+satisfy in order for the PageRank to exist and to be unique?
+And now what we will learn is basically we will learn the,
+the real, the Google formulation of the, of the PageRank algorithm.
+So, what we know so far is that the importance of a page j in, in,
+in a web graph is simply the sum of the importances of pages i that point to it,
+and when, when you sum these things together,
+we divide them by the out degree of, of the, of the source page.
+And we, what we established is that this equation that I have here is,
+simply can be written as a matrix equation.
+So now there are three questions we need to answer.
+First, does this M equal r equals M times r, does this converge?
+Second, does it converge to what we want?
+And third, are our results reasonable?
+So what we'll do next is we'll answer these questions one by one.
+So here is the first question, does this converge?
+Imagine a very simple graph, only two nodes.
+And node a points to node b, and b points back to a.
+And now imagine we want to run our power iteration.
+And as I, as I showed in the, in the last slide we said that
+the PageRank vector is unique and it, the stationary distribution will always be
+reached regardless of how we initialize our initial vector.
+So now imagine I, we initialize our, our vector r,
+r of, r of times 0 to be simply, to have, to have two values,
+to have one value 1 on the coordinate a and have value 0 on coordinate b.
+Now when we are multiplying M times r, what will
+happen is the score of a gets passed to b, and score of b gets passed to a.
+So the next time step the coordinates will flip.
+And now when we mul, multiply again, the coordinates will flip again.
+Right, so what we see here is that we will never converge.
+All, all that is happening here is that the score of one gets passed between a and
+b and score of 0 gets passed between b and a.
+So it seems that our, our PageRank computation will never converge.
+This problem is called the spider trap problem.
+I will explain it a bit more later.
+So, so far it seems that our method for computing PageRank the way defined it so
+far, doesn't really work.
+So we looked at the spider trap problem that I'll talk more about later.
+And here is another problem with the current formulation of PageRank, and
+this is called the Dead end problem.
+And here, the, the, the,
+thing is, even a simpler graph than what we had before breaks our algorithm.
+So lets consider a very simple graph.
+Two nodes, one edge, kind of, couldn't be simpler.
+And let's think of the same initialization vector as we had before.
+So a starts with score 1 and b starts with score 0.
+So what, what happens in this case is in the first multiplication with matrix m
+the score, the scores gets flipped.
+But now what happens in the second step of multiplication is basically the score of
+one gets lost, right?
+The, a, b is not able to pass the score to anyone else so the score get lost, and
+we converge to this vector of 0.
+Which is, which is a problem.
+So, what we will do now is actually talk about these two problems of
+spider traps and dead ends in, in more detail and develop solutions for them.
+So to summarize, there are two problems with how we defined PageRank so far.
+The first problem is the problem of dead-ends.
+So basically the idea is that dead-ends are these web pages that have no
+outgoing links.
+So what will happen is that the importance of these pages will link up, right?
+The idea is that basically whenever our web page receives its PageRank score and
+there is no way for our to pass this PageRank score to anyone else because it
+has no out-links, this PageRank score will leak out from our system.
+And at the end, the PageRank scores of all of the web pages will be
+0 as we saw in the previous example.
+So that's why this called the dead end problem.
+And then the spider trap problem,
+basically the idea is that here out-links from webpages can form a small group.
+So the idea is that the, the,
+if you think of a random walk interpretation of PageRank,
+basically the random walker would get trapped in a small part of the web graph,
+and then, the random walker will get kind of indefinitely stuck in that part.
+And at the end, those pages in, in that in that part of
+the graph will get very high weight, and every other page will get very low weight.
+So this is called the problem of spider traps.
+So what we will do next is we'll actually develop our solutions to both of
+these problems.
+So let's look at the two of the problems that we,
+that we just discussed in a bit more detail.
+So first is the problem of spider traps on a bit more complicated graph.
+So here is a variant of the graph we,
+we have from our initial investigation of PageRank with three nodes y, a and m,
+and in this case m is a spider trap which means m has this self loop.
+So whenever a random walker gets to know them, it basically gets stuck to this
+in this infinite loop because there is no other way out out of node m and
+all that m, the walker can do is infinitely walk the self loop from m.
+So now, think of the, the stochastic matrix m that we have here on the right.
+And the question is, what happens to the power iteration as, as, as,
+as we run it and multiply our r with the matrix m?
+So, here is the example.
+I have my vector r.
+I initialize it as we, as we said to 1 over the size of the graph.
+So, one third on every component and I start multiplying with matrix M.
+What will happen, is at the end, here is the result that we looked at.
+Basically the importance of node n will be 1 and the importance of both other nodes.
+Will be zero.
+If you think about the, the random walk interpretation of PageRank,
+this result is, is very much expected, right?
+If we think of a random walker browsing this string node graph, and
+we ask after lots and lots of time, where do with think the random walker will be?
+Basically the random walker will be stuck at, at, no-,
+at node n with probably 1.
+What this means is basically wherever the random walker starts, for
+some time then the random walker will be able to walk between nodes y,
+nodes y and a, but as soon as the walker crosses the edge to m it will be
+stuck in this infinite loop and it will never be able to move anywhere else.
+So this means that basically all the PageRank scores will be,
+will be concentrated at node m, which is what, exactly what happens.
+So, in some sense in this case,
+the PageRank's, the page rank very nicely converged to some actor, but
+it converged to something that doesn't make much sense, right?
+So all the, all the importance gets concentrated in, into this single node,
+and both nodes y and a have importance of 0.
+So, this is the problem of spider traps,
+is that they lead to results that are intuitive or not what we want.
+So now how to solve the problem of spider traps is to slightly
+modify our random walk way of thinking about PageRank, right?
+So the way Google solves the solution to the spider traps is to
+say that each step the random walker has two choices.
+With some para with some parameter beta, with some probability beta,
+the random walker will follow the, the outgoing link at random.
+So the same as the random walker was doing before, but
+with some remaining probability,
+the random walker will randomly jump to some other random web page.
+Right?
+So the way we can think of this now is that we have a random surfer,
+that whenever the random surfer arrives to a new page, flips a coin, with, and
+if the coin, this coin says yes, the random walker will pick another link at
+random and walk that link, and if the coin says no, the random walker will
+randomly teleport, basically jump to some other random page on the web, right?
+So this means that the tele, the, the random surfer will be able to jump out, or
+teleport out, from a spider trap within only a few time steps, all right?
+After a few time steps, the, the coin will say, yes, let's teleport, and
+the random surfer will be able to jump up out of the, out of the trap.
+So, if we think about this in terms of the graph,
+here is our graph from before we node m being the spider trap.
+So what we can think of it, of, of this now, is that now we
+have this additional links that basically have with small probability,
+the random surfer can teleport out of, of any node a, any given time.
+So this means spider traps are no good problem anymore, so everything is good.
+The problem, we still have is the dead ends.
+So let's understand the dead, dead ends problem a bit better.
+So, the problem with dead ends was the following.
+Was basically that these are the pages that have 0 out degrees.
+So, their PageRank score does not get distributed to
+any other paging the graph because they don't point to anyone else.
+So going back to our 3, 3 node graph example in,
+in this case node n is the dead end because the out degree of n is 0.
+Okay?
+So now what we see if we look at the structure of our matrix m,
+the first thing we notice is that our matrix m is not stochastic anymore.
+Right? So our columns don't sum to 1.
+In particular, the, the columns of, for node m do not sum to 1.
+The, the reason for that is, because node m has 0 out degree, so
+it will be all 0's in that column of matrix m.
+So if we look at our set of equations what we used to
+have before was now is that basically the,
+the m does not r of m does not cor, does not appear in any of the equations.
+And now if we start, if we would go and run our Power Iteration.
+Here is, here is basically what happens.
+We again start with the vector of one-thirds.
+Keep, keep multiplying with m in the first iteration, second iteration,
+third iteration.
+And after a while all our, the, our vector basically converges towards 0's.
+So basically it would say that all web pages in this graph have importance of 0.
+Which is, again, not what, not what we want.
+And basically the problem is that whatever is the PageRank score of, of node m,
+node m is not able to pass this PageRank score to any other node in the network so
+that PageRank score kind of leaks out of our system.
+So the question is,
+how do we solve, the, the problem we just observed with dead-end, with dead-ends?
+So, the, the way we solve the problem is to basically say the following.
+What we say is that if a node has no outgoing links,
+then when we reach that node, we will teleport with probability 1.
+So this basically means that for example whenever, whenever we reach node m we will
+always jump out of it random uniformly at random and tele, teleport somewhere else.
+So if you think,
+what do this to our stochastic matrix m and the column corresponding to node m.
+What happens is that basically now column 1 will have,
+will have values of 1 over 3 for all, all the, all its entries.
+What does this mean?
+It's basically whenever a random surf, surfer comes to m, it teleports out, and
+with probability one-third, lands to any, any other node in the graph.
+So this is, again the way using the random jumps or
+random teleports, how we solve the problem of dead ends.
+
+
+
+
+
+# 10. Why Teleports Solve the Problem (12:26)
+
+So, now the question is why, why, why do,
+why do teleports solve all our problems, right?
+So before, here is the, the equation we had from before and
+in order to understand why the teleport solve all our problems, we have to
+go back to the theory of Markov chains that I alluded to in the previous lecture.
+So the way we define a Markov chain is the following.
+So Markov chain is this abstract mathematical object that has
+the following ingredients or parts to it.
+So first we think that we have set of states X, okay.
+Then we have a transition matrix P, where Pij simply measures
+what is the probability that if, if we were at state i,
+how likely are we to transition to state j in a given time stamp.
+Right so Pij means given that I was at j in previous step how likely am I
+transition to node to, to state i okay?
+And then pi is is a stationary probability distribution of
+being at any of the states x, and our goal right
+is to compute the value of this equation, that pi equals P times pi, right?
+So this would be a stationary probability distribution of this Markov chain that is
+defined over a set of states and with the transition matrix P.
+And again, you immed, immediately see the, the,
+the correspondence of our initial page link equation.
+Here we have pi equals P times pi, and we have r equals M times r.
+So, Theory of Markov chains says the following.
+It says that for any start vector the power iteration applied to this Markov
+transition matrix P will converge to a, to a unique positive, stationary vector.
+As long as this matrix P has three properties.
+It has to be stochastic, it has to be irreducible,and aperiodic.
+So now, what I will show is that for each of these three conditions, stochastic,
+irreducible, and aperiodic, actually adding random teleports gives us a, gives
+us a, in some sense stochastic transition matrix that has these properties.
+So what we will do now is, convince ourselves that our matrix M
+together with this random teleports, has all the three properties that we need for
+the for the PageRank r to exist.
+So the first question is, why do teleports make m stochastic?
+So a matrix is stochastic if its columns sum to 1.
+So in our case or in case of the dams when we have this node m that has no out-links,
+the column for node m did not sum to 1, it sums to and
+the specificity condition for the matrix was violated.
+So now if we add this random teleportation, we can that occurs with
+probability 1, we can basically think of this as adding, add, the green
+address from node m, to any other node in the network, including the [INAUDIBLE].
+Right, this means that our matrix m now got transformed and our column for m,
+for node m now has these values of 1 over 3 in each so the column sums to one and
+we get the stochastic stochasicity property of matrix m.
+The way we can think about this in terms of equations is that basically we say our,
+we define a new matrix A where we take our previous matrix M,
+and now we, we introduce two pieces of notations here.
+First I have this vector A where the i-th component of vector A equals 1
+if node I has out degree 0, if node I is a dead end, and otherwise if it has value 0.
+And then this vector E is just vector of all ones, so
+it's a vector where every component has a value of 1.
+So what we basic, what this basically means is we take matrix M and
+wherever there is a column with in the matrix M that has all 0's,
+we replace that with 1 over the out degree of, of that given node.
+Exactly what we, what we need in the case of m.
+So this is what we did now, is basically a random, a random teleportations.
+What they do, they take our matrix m that cannot be stochastic in the graph because
+it dead ends and transform into a new matrix A that is now stochastic.
+By, by taking the teleportation with probability 1 out of the nodes with 0
+out degree.
+So that's the first property.
+The second property is that m has to be a periodic.
+So we say that a chain is periodic if there exists some value k such that
+the interval between two visits to some state s is always a multiple of k.
+So for example, if we were to have a graph on three nodes with with a directed cycle,
+as I have it here, then for example, this a, this would, this would be a periodic,
+periodic chain, because the, the random lock here is deterministic and every,
+every two steps we return back to the, to the same node.
+So by adding teleports what this basically means is that that at any
+time we will be able to jump out of, of this kind of infinite, infinite loop.
+And we can even think that what we have is we have this self loop so
+that the, the random walker can, can get the,
+can spend some time at the given node and this way the periodicity is broken.
+And this is how basically random teleports solve the periodicity problem.
+Now the last property we need to talk about is irreducibly, and
+we say that m is irreducible when from, from any state
+there is a non-zero probability of going to any other state in the, in the network.
+This means that, basically, we can never get stuck in a given state.
+So the way, for example,
+we would make our given graph here irreducible is to add all these other,
+other possible links, which basically means we would add a random jumps.
+So this would mean that the, that there is
+a non-zero probability of going from any state to any other state in our graph.
+So putting all this together this is, this is exactly what random jumps do.
+So basically Google's solution to, to PageRank and
+to random server interpretation of PageRank was to introduce random jumps.
+So the idea is that we state we want to take.
+Th, matrix M, make it, make it stochastic, aperiodic, in irreducible.
+All this is achieved by slightly modifying the,
+our random walking process, where at each step a random surfer has two options.
+With probability beta, the random surfer goes and follows a random outlink.
+And with probability 1 minus beta.
+The random surfer jumps to some other page at random.
+So now what this basically means is that this now changes our PageRank equation.
+So if you think about the PageRank equation now, it's a bit different.
+So here for example, the score of node j can be computed as follows, right?
+So basically what this is saying is the following.
+The importance of node j is first.
+The sum of the importances of all the nodes i that point to it.
+Where r sub j, r sub i is the probability that random walker is at node i.
+Then we divide that by the outdegree of i as the probability that
+the random walker actually traverse the link towards j.
+And, this only happens with probability beta because the random walker,
+when they are at node I, has to decide to actually follow a link,
+and this happens with probability beta.
+And then of course, how likely is the random walker to visit node J?
+It either does it by by, by following a link.
+Or with probability one minus beta the random walker decides to jump.
+And if the random walker decides to jump then it will land at a given node J
+with probability one over N where N is the number of nodes in the network.
+Right? So basically we
+took our initial formulation of PageRank and
+now we change it a bit where we have the random walk part.
+This is the part where we kind of multiply with beta.
+And we have the random jump part.
+Where we have the 1 minus beta.
+So now the question is given this new random walk formulation.
+Is, is the power iteration still going to work right?
+Now we have a different more complicated recursive equation.
+So the question is how, how do we compute this?
+And the way we compute this is basically to, to run,
+to run our eigenvector finding method, our power iteration again.
+The way, the way we see that basically we have the same problem as before is to
+notice the following.
+So we have this, what we will call Google matrix, we will call it A.
+And we will express A as a matrix M plus some other matrices.
+So we take our matrix M and multiply it with beta.
+This is the, the part that comes due to random jumps.
+And then what we want to do is we have this other part, 1 minus beta,
+that basically this is the probabilities or transitions due to random jumps.
+And simply the expression you get here is that this is 1 minus beta, 1 over n,
+where n is the nodes in the graph, times the outer product of this vector of all,
+of all 1's called e, okay?
+So what this means is that even with these random jumps
+the PageRank solution can be expressed exactly as we had it before.
+That r equals A,
+now this is the Google matrix not the matrix M anymore time, times r.
+Of course one question that we need to answer is what is a good value of
+beta right?
+How often should the random worker jump?
+For example is beta would be 0,
+then what would that mean is that the random walker jumps all the time, so
+all the nodes in the network have exactly the same prob the same PageRank score.
+Because the random walker is not really walking over the graph,
+it's just randomly jumping all the time.
+If we set beta to be equal to 1, then basically there is no random jumps.
+And this means that our Matrix A wouldn't be stochastic anymore, and, and so on.
+And we would have no random jumps and PageRank wouldn't, wouldn't really work.
+So what turns out is that the good value for
+beta is to set beta between 0.8 and 0.9.
+And usually people set beta to be 0.85.
+Which basically means for every five steps you do a random jump.
+So a random walker, in some sense, in, on the average would do five steps and jump,
+another five steps and a jump, and so on.
+So that's basically the the idea.
+So, let's now see how this PageRank formulation would work in,
+in the real world.
+So imagine we have our old graph as we had it before, three nodes.
+And in this case, node M is a, is a spider trap right?
+That is the self loop.
+What I also have on this graph is, I have these green edges.
+In these green edges,
+you can think of them as edges that are there due to, due to random jumps.
+So we have our matrix M, as we had it before.
+With matrix M everything is fine, it's still,
+it's still stochastic, the only problem is that node n is a, is a dead end.
+Oh, sorry, is a spider trap.
+And now what I also did in this graph is I labeled every,
+every edge with with it's transition probability.
+So the way, the way we do now is we take this matrix M,
+we take this other matrix of one-thirds and multiply it with 1 minus beta, so
+in this case we are assuming beta is 0.8, and this gives us the mat, the matrix A.
+And now if we do the ma, multiply our r with matrix A,
+this is how the using power iteration,
+these are the different versions of vector r as we keep multiplying, and
+at the end the PageRank scores we would converge to are given here.
+So basically the score for node y would be 7 over 33.
+For node A would be 5 over 33.
+And for node M would be 20, 21 over 33.
+So what do we see?
+We see that m is still the most important node in the graph,
+because of this spider trap.
+But we see that nodes y and a have also non-zero score.
+And actually node a is more important than node y.
+So it seems everything works and everything is fine.
+
+
+
+
+
+
+# 11. How we Really Compute PageRank (13:49)
+
+So far we have been exploring PageRank and we have formulated it
+as this eigenvalue problem and we added the random walks and teleportation suite.
+So now the what we look next is actually how do we really compute PageRank for
+the web scale graphs?
+Basically how do we compute it for
+graphs that don't even fit into the main memory of a machine?
+So let's look at what we know so far.
+Right?
+What we know so far is that the key step in computing PageRank is
+this vector matrix multiplication where we are computing the new
+vector r by taking the the matrix M and multiplying it with the old vector r.
+right. This is very easy to do if we
+have enough main memory in the machine to, to store both a, the old version of r, and
+the new version of r.
+Now, let's look at that is the structure of matrix A.
+And we will notice one thing that, that is kind of striking.
+Right, so here I have an example from our previous, previous slide with the three,
+three node graph where our matrix A equals the, the matrix M times beta
+plus 1 minus beta times this matrix of 1 over N's, where N is the num,
+the size of the, size of the graph, and the size of this matrix is N by N.
+Right, so notice down here what happens.
+Right, we take our matrix M, multiply it with 0.8.
+We take this matrix of N by N where every entry is 1 over N.
+Multiply that with 0.2, and sum these to matrices these together.
+So what happens now it that our matrix A is this big,
+big matrix with non-negative entries.
+And what we notice is that every entry in this matrix is non-zero.
+So, initially our matrix N had a number of 0's, but
+not our matrix A has no non-zeros.
+So what is, what is important now is that
+the amount of memory we will need to store A will be actually huge, right?
+A is now what is called a dense matrix.
+Let me just give you, give you an example.
+So imagine we have graph on 1 billion nodes.
+So basically we have 1 billion web pages.
+And 1 billion web pages is a very tiny fraction of the web graph.
+So we use a small graph from the web size point of view.
+And lets assume that we need, lets say,
+4, 4 bytes to save, to save each entity of this graph.
+Right? So to save a node ID.
+So, this means that for example to store 1 billion pages and and address.
+This means that we will need around 2 billion 2 billion entries.
+And this, this means that we will need,
+need around 8 GB of memory to store matrix M, for example.
+But for example, if you would have to, want to store all the entries of
+matrix A now the size of matrix A is N by N, which is N squared.
+Which means that we would have to store N squared entries.
+And the amount of memory that we would need would be like, 10 to 18,
+which is a huge number and we would never be able to store this in memory.
+I, I think there is not even.
+If you take all the computers in the world, that is not,
+they don't have enough memory to store 10 to the 18 bytes or integers in memory.
+So the question is what, what can we do?
+Is there a way to get around this,
+and kind of preserve the, the sparsity of the matrix M, right?
+Basically the idea is that in a real matrices M will be extremely sparse.
+Meaning that on, on,
+on average page only points to ten other page in the graph, right.
+So this means that rather than storing the whole, the whole,
+the whole vector of 0's, and
+then only a few non-zero elements, we kind of only want to store non-zero elements.
+So here is, here is basically the idea and how we,
+how we now can solve the, the PageRank problem.
+So just to remind you, we, we right, we have the capital n number of pages or
+number of nodes in the graph.
+We are now define, we defined matrix M to that's in such a way that the entry Mij is
+1 over the degree of j, if node j points node i, and otherwise that entry is 0.
+And now let's think about, how do random teleports play with this, into
+this matrix and right, so basically the way we can think of teleport is basically,
+we take the our initial graph and, and all these additional transition edges.
+Right? So we can think that
+random teleport's basically take our graph and
+transform it into a completely connected graph where we have two types of edges.
+We have the edges that are that corresponds to the hyperlinks.
+And then we have the edges that correspond to random teleportations.
+Right? Whenever we can teleport from one node to
+another we add an edge.
+And we say that kind of a random surfer traverses this edge
+with a very small probability.
+And this is exactly what we will do now, right?
+So basically adding the teleport link from node j to every over page in the graph,
+and we want to set this teleportation probability of such teleport link to
+be 1 minus beta.
+Right, that's the probability of a teleport times 1 over n.
+Right? This is the number of,
+the number of web pages so that's the,
+that's the probability of traversing one individual teleportation link.
+Right? This also means that what we need to
+do is now that on the all the other links of the web graph we have to reduce their,
+their transition probabilities right?
+So the transition probabilities go from one over the out degree of node j
+to beta times 1 over the out degree of node J.
+Right?
+So now basically what, what, what we did, is we, we took our graph and
+we and we in some sense transformed it into this fully connected graph,
+with different position probabilities over the edges that correspond to
+the hyperlinks and edges that correspond to teleports.
+However, what we notice is that this transformation is actually equivalent to
+saying that we will text the PageRank of every page by a fraction of 1 minus beta.
+And then we will take this 1 minus beta fraction of the PageRank scores, and
+we distribute it the right?
+Meaning that this random teleportation part of the PageRank score,
+gets evenly distributed among the webpages.
+So this is the, this is the intuition.
+So let me now show you how the mathematics works out.
+We will start, again, by looking at our initial PageRank equation,
+r equals A times r, where the way we define M, just to remind you is to take
+every entry ij of matrix i, is simply beta times the, the corresponding entry
+of matrix M plus 1 minus beta over N, where N is the size of the graph, right?
+The way we think about this is basically we say the transition of a random walker
+from, from node j to node i is simply the beta times
+the transition due to the random walk, plus a small constant,
+constant factor that happens due to a random jump probability transition, right?
+So now that we have this, let's unpack our PageRank equation.
+If we unpack this PageRank equation, basically what we are saying N3i of
+the PageRank vector r is simply a, a summation over the,
+over the, over the j when j arranged for 1 to N, Aij times rj.
+Right?
+What we will do now is we will take this A and expand it into the,
+into the equation we have above.
+So if we do this, what, what we notice is the following, right?
+This is simply a summation, here is,
+here I'm expanding the definition of A now into how we computed matrix A.
+And I have my entry from the rank vector r.
+So I can distribute the summation.
+And here is we, what, what happens, right?
+So we have now two summations both over the same range.
+And what we observe now is one thing that we know that vector r
+is is a probability distribution, which means that the entries vector r sum to 1.
+Which means that this second summation here,
+the entries the sum over j of rij sums to 1.
+So the second summation basically simplifies to just this
+constant of 1 minus beta over N.
+So notice what, what we did right now.
+What we did is basically we expressed our r equals A time
+r into a different sum, in, into a different expression.
+Where we say that our r equals beta times M times r plus some some, some constant.
+Right? What this means is
+now basically that we never really need to explicitly express matrix A, right?
+We never really need to materialize this big,
+dense matrix where every entry is non-zero.
+We can only work with matrix M because matrix M is full of 0 elements,
+which we don't need to explicitly store.
+So we can actually work with much, much smaller matrix.
+So this is basically the, the, the good thing that happened here.
+So, rather than working with a big n squared size, size matrix,
+we are now working on a, with a very small matrix.
+And let me just demonstrate how, how much difference this makes in practice, right?
+So what we did in the, in the few last slides, is basically we re-arranged out
+PageRank equation into a, into a different equation that doesn't depend on a,
+but only depends on our matrix M.
+Right?
+So now, what is important is that matrix M is sparse.
+Right, what do I mean by that?
+Is for example, in the matrix M,
+if you think of it as a, as a matrix, in every, in every row.
+Even though this matrix is let's say a billion times a billion,
+like 10 to the nine times 10 to the 9 the individual,
+the number of non-zero entries in every row on average will be around 10.
+What this means is that an average page has around let's say 10 out-links or
+even 100 out-links.
+But the point being is that out of 1 billion entries in every,
+in every row of this matrix, there will be only 100 non-zero's.
+So this means that rather than storing the full and
+squared number of cells in this matrix,
+we will only store the non, the cells that actually have the non-zero value.
+So what, what this means is that in, in every iteration of our
+PageRank equation basically all we need to compute in some sense is the,
+is the product of our matrix, matrix M with the, the,
+with our old rank vector, and then add a constant value of to every rank,
+rank score, just because of the random of the random jumps.
+Of course, here I was assuming that our graph M has no dead ends.
+If our graph will have no will have dead ends,
+this means the vector r won't sum to 1, so after everything is done,
+we will have to kind of expand it back to normalize to 1.
+I'll talk about this a bit more in the next few slides.
+So, here is now the complete algorithm for PageRank, how one would go and
+actually implement it in practice.
+So, the way this works is on our input we are given a directed graph G,
+and we are given a parameter beta.
+This is the teleportation parameter beta.
+Right?
+And what we are assuming in the algorithm is that our graph
+has both spider traps and dead ends.
+Kind of, nothing will break the algorithms robust,
+regardless of whether this dead ends and spider traps actually happen.
+So, the output of our algorithm is now a page link vector r, and
+the way the algorithm operates is the following.
+At the beginning we set all the, all the PageRank scores to be 1 over N,
+to be equal.
+And we set time equals 1.
+And then we have this loop where we iterate until our PageRank vectors will
+converge, which means that the PageRank vector between ti, time step t minus 1 and
+time step t, the, the in the the individual entries do no, do not change
+much, but do not, do not change more than some, some small value epsilon.
+Which is, and this epsilon is again a user set parameter,
+something small but and depending on how small this value is,
+this is a number of iterations that are going, and we need to converge.
+Okay, so now we explained the outer loop.
+So now, now let's look what happens in the inner loop.
+So in the inner loop, first we have, we have another a full loop where basically
+we go and update the PageRank score of every node by simply taking the PageRank
+scores of every node i that points to it and then divide the by r degree of phi.
+This is the first part.
+Of course here we have to be careful if node j has gets the rank 0,
+if the n degree of it is 0, right?
+So, if a node has no n degree then we set its PageRank score to 0.
+And then of course what happens now is that if we have dead ends,
+the, the PageRank will leak out.
+So now we need to figure out how much of the PageRank has leaked out, and
+then reinsert the PageRank the missing PageRank scores into our rank vector.
+So, all we, what we do here is the following.
+We compute what is the sum of the components of our PageRank vector are so
+far, we call this s.
+We want this s will be less than 1, so
+what means is that 1 minus s amount of PageRank has kind of flicked out.
+So we want to now take this and, and evenly insert it into every entry of r.
+So this exactly what we, what we do.
+We say now we go over vector r again.
+We say the, the true value of the PageRank score is
+whatever we had before plus this missing part of the PageRank score.
+Right? 1 minus S over N.
+Which means that every node N gets what,
+1 minus S times 1 over N fraction of the,
+of the leaked out score, so that now again our vector R will sum to 1.
+So with this, basically we obtained the new, new version of r, we check for
+convergence, and we keep we keep repeating until until we converge.
+
+
+
+# Study material
+
+![](C:/Users/qp/Pictures/Screenshots/irreducible matrix - StackExchange.png)
+![](C:/Users/qp/Pictures/Screenshots/What is stochastic adjacency matrix.png)
+![](C:/Users/qp/Pictures/Screenshots/Need a real understanding of Markov process - Book.png)
+![](C:/Users/qp/Pictures/Screenshots/multiplying a distribution vector v by M gives distribution of next step.png)
+![](C:/Users/qp/Pictures/Screenshots/5.1.3 the structure of the web - book.png)
+![](C:/Users/qp/Pictures/Screenshots/5.1.3 how to avoid dead ends and spider traps.png)
+![](C:/Users/qp/Pictures/Screenshots/Spare matrix - Wikipedia.png)
+
+
+
+
+
+## Course  /  Module 2: PageRank  /  Homework: MapReduce and PageRank
+
+![](C:/Users/qp/Pictures/Screenshots/Homework MapReduce and PageRank - 001.png)
+![](C:/Users/qp/Pictures/Screenshots/Homework MapReduce and PageRank - 002.png)
+
+
+
+
+
+
+## Course  /  Module 3: Locality-Sensitive Hashing  /  Outline of Module 3
+
+# README
+
+![](C:/Users/qp/Pictures/Screenshots/CSX0002 - Outline of Module 3 - README.png.png)
+
+
+
+
+
+# 12. Finding Similar Sets (13:37)
+
+We're now going to take up a class of problems where we're given a large
+collection of sets, millions or
+billions perhaps, and we are asked to find those sets that are similar.
+The notion of similarity is quite specific and it's called Jaccard Similarity.
+We'll learn this concept soon, but the idea is roughly, that the larger
+the fraction of elements the two sets have in common the more similar they are.
+There is a fundamental problem of scale.
+If we have even a million sets not a large number compared with the number of
+web pages or Amazon users, the number of pairs of sets is half a trillion.
+We don't have the resources to compare them all, so we need some magic defor,
+focus us on the pairs that are likely to be highly similar,
+never looking at the vast majority of pairs.
+When you learned about hashing you're, it probably seemed like a bit of magic.
+You have a large set of keys, and when you want to find some key k,
+you go right to it without having to look very far at all.
+The technique we're going to learn,
+locality sensitive hashing, is another bit of magic.
+Here we are pointed right at the similar pairs without having to
+wade through the morass of all pairs.
+We'll begin by looking at some applications where finding similar sets is
+very useful.
+We then are going to focus initially on finding similar documents,
+meaning that they have a substantial amount of text in common.
+For this problem we first study shingling, which is a way to convert
+the informal notion of similar documents into a formal test for similarity of sets.
+Then we learn the remarkable technique called min hashing,
+which allows us to replace a large set by a much smaller list of values.
+The magic of min hashing is that the similarity of the small lists,
+called signatures, predicts the similarity of the whole sets.
+Finally, we take up the locality sensitive hashing technique itself and
+see how to find similar sets or
+similar documents without doing anything that involves searching all pairs.
+To begin, let's look at some of the interesting data mining problems that
+fit the pattern of mining for similar sets.
+For example, we can view web pages as the set of words they contain.
+If two pages have similar sets of words,
+we might expect them to be about the same topic.
+For another example, imagine a matrix of Netflix users where the rows correspond to
+the users, and the columns to the movies.
+The entry for a given user and
+movie is the rating that the user has given the movie, blank if no rating.
+We might see a user as the set of movies they have rated four or
+five, that is movies they like.
+Two users who have similar sets of liked movies probably have the same tastes, and
+Netflix can use the movies one user said they
+liked to recommend movies to the other.
+We can use the same idea backwards.
+Where we think of a movie as the set of users who like that movie.
+Movies with similar sets of users can be expected to
+belong to the same genre of movie.
+People create records of data about themselves at many different sites,
+Google, Amazon, Facebook and so on.
+We may want to figure out when two records refer to the same individual, and
+this need gives rise to the problem called entity resolution,
+determining the set of records that refer to the same individual.
+To see the problem, many sites will ask for phone number.
+But you might give your land line at one site, your cell phone number at another,
+not give a number at all at a third site, and mistype your number at a fourth.
+However, we can often wade through the errors and
+ambiguities by thinking of a record as a set of attribute value pairs.
+Pairs like, oh, phone is 555, I don't know, whatever okay?
+Records with similar even if not identical sets of
+attribute value pairs may well represent the same individual, and
+these records can be merged to combine their information.
+We're going to focus on a particular important application,
+finding lexically similar documents in a large collection of docs such as the web.
+Note we are not talking about docs on a similar topic.
+We want them to have sequences of characters in common.
+This question has a variety of applications.
+For example, the techniques we’re going to learn were used to find mirror
+pages on the web.
+Mirror pages are typically almost the same, but they will differ, for example,
+in the information about the host site for the page and links to the other mirrors.
+Search engines use a technique like the one we’ll learn so
+they don’t show more than one of a set of mirror sites.
+Another application of finding lexically similar documents is to
+search for plagiarisms.
+For example, spammers will take your webpage, give it a new URL,
+and place ads around it.
+The plagiarizer may be clever, taking only a part of the plagiarized document,
+reordering pieces, perhaps changing a word here and there.
+We still want to be able to find such pairs of documents in
+a collection as large as the web without having to compare all pairs of documents.
+It can be done.
+In fact, it's much easier than it looks.
+And another application concerns sites like Google News that
+aggregate new stories.
+An article may be written by the Associated Press and
+distributed to thousands of newspapers and online news sites.
+Each will make modifications, perhaps truncating the story,
+surrounding it with ads, and so on.
+It's important for an aggregator to realize that the two web
+pages are really telling the same story because they came from
+the same original even if they have been significantly modified.
+As we suggested in the introduction,
+we're going to learn three important new techniques.
+Shingling is how we convert documents to sets so
+that documents that have a lot of text in common will be converted to
+sets that are similar in the sense that they have a lot of members in common.
+Then we'll learn about minhashing,
+which is how we convert sets to short signatures.
+The important property is that we can look at the signatures of two sets and tell
+approximately how similar are the sets that we obtained by the shingling process.
+And last but not least,
+we'll learn the technique called Locality-sensitive hashing or
+LSH that let's us avoid looking at most of the pairs of
+signatures that do not represent similar sets.
+Here's an outline of how we'd process documents to find those that
+are similar without comparing all pairs.
+At the outset, I want to emphasize that there can be both false positives and
+false negatives.
+That is, the algorithms we use can sometimes fail to find a pair of
+documents that we would regard as similar.
+That's a false negative.
+We can also, if we're not careful to check the details of the document,
+sometimes have false positives.
+Pairs of documents we declared to be similar, but they really aren't.
+However, by carefully choosing the parameters involved, we can
+make the probability of false positives and negatives be as small as, as we like.
+Okay so, we start by shingling the document.
+Okay, that is we replace the document by the set of strings of some chosen length,
+k, that appear in the document.
+That's how we convert documents to sets.
+We then construct signatures for
+the sets of single, shingles using the technique called minhashing.
+The result of minhashing a set is a short vector of integers.
+The key property,
+which we'll prove, is that the number of components in which the, two of
+these vectors agree is the expected value of the similarity of the underlying sets.
+Incidentally, the reason we want to replace sets by their signatures is that
+the signatures take up much less space.
+If we're dealing with a large set of documents, we'd like to be able to work in
+main memory rather than with disc for efficiency, and reducing the space of
+the representations makes it more likely that we can work in main memory.
+But it seems we still need to compare all pairs of signatures, and
+that takes time that is quadratic in the number of documents.
+As we mentioned, even a million documents leads to half a trillion pairs of
+signatures to compare, and that is too much.
+So that's where locality sensitive hashing comes in.
+We do some magic, which we'll explain soon, that allows us to look at
+a small subset of the possible pairs, and test only those pairs with similarity.
+By doing so, we get almost all the pairs that are truly similar, and
+the total time spent is much less than quadratic.
+So lets begin the story by finding exactly what shingles are.
+For any integer k, a k-shingle is sometimes called a k-gram,
+is a sequence of k consecutive characters in the document.
+The blanks that separate the words of
+the document are normally considered characters.
+If the document involves tags such as an HTML document then the tags may
+also be considered characters or they can be ignored.
+So here's an example of a little document consisting of the five characters abcab.
+We'll use k equals two for
+this little example, although in practice you want to use a k that is
+large enough that most sequences of k characters do not appear in the document.
+A k in the range five to ten is used,
+generally used but the two shingles for
+our little document are ab, which is that,
+then bc, then ca, and then ab again.
+Since we're constructing a set,
+we include the repeated two shingle ab only once,
+and thus our document abcab is represented by
+the set of shingles ab, bc and ca.
+We need to assure ourselves that replacing a document by
+its shingles still lets us detect pairs of documents that are intuitively similar.
+In fact, similarity of shingle sets captures many of the kinds of
+document changes that we would regard as keeping the documents similar.
+For example, if we're using k-shingles and we change one word, only the k-shingles to
+the left and right of the word as well as shingles within the word can be effected.
+And we can re-order entire paragraphs without affecting any shingles except
+the shingles that cross the boundaries between the paragraph we moved and
+the paragraphs just before and after in both the new and old positions.
+For example, suppose we use k equals three, and
+we correctly change the which in the sentence to that,
+the only shingles that can be affected are the ones that begin at most two
+characters before which and end at most two characters after which.
+Okay, these are g blank w, blank wh,
+and so on, up to h blank c.
+A total of seven shingles.
+These are replaced by six different shingles.
+G blank t, t is it blank th,
+and so on up to t blank c.
+however, all shingles other than these remain the same in the two sentences.
+Because documents tend to consist mostly of the 26 letters, and
+we want to make sure that most shingles do not appear in a document,
+we are often forced to use a large value of k, like k equals ten.
+But the number of different strings of length ten that will actually appear in
+any document is much smaller than 256 to the tenth power or
+even 26 to the tenth power.
+Thus, it common to compress shingles to save space while still
+preserving the property that most shingles do not appear in a given document.
+For example, we can hash strings of length ten to 32 bits or four bytes, thus
+saving 60% of the space that are needed to shore, to store the shingle sets.
+The result of hashing shingles is often called a token.
+Thus, we can construct for a document the set of it's tokens.
+We construct the shingle set and then hash each shingle to get a token.
+Since documents are much shorter than two to the 32nd power byte,
+we still can be sure that a document is only a small fraction of
+the possible tokens in it's sets.
+There's a small chance of a collision where two shingles hashed to
+the same token, but that could make two documents appear to have shingles in
+common when in fact they have different shingles.
+But such an an occurrence will be quite rare.
+In what follows we'll continue to refer to shingles sets when these sets
+might consist of token rather than the raw shingles
+
+
+
+
+
+# 13. Minhashing (25:18)
+
+We're now going to forget whether the sets we deal with come from single documents or
+any other source and concentrate on the sets themselves.
+We'll learn the formal definition of similarity that is commonly used for sets.
+This notion is called Jaccard similarity.
+We'll then learn how to
+construct signatures from sets using the menhashing technique.
+And will prove the strong relationship between the similarity of
+the signatures and the sets they represent.
+Let C1 and C2 be two sets, their Jaccard similarity is the size of
+the intersection of these two sets, divided by the size of the union.
+We'll use Sim as the function representing the Jaccard similarity.
+For example, these two circles represent sets.
+There are three elements in common to both sets.
+So, the size of their intersection is three.
+And there are eight elements in the union, so the size of their union is eight.
+The Jaccard similarity of these sets is the ratio of the sizes of
+their intersection and un, and union or three eighths in this example.
+We're going to be dealing with large collections of sets and
+it is useful to think of these collections as represented by a single Boolean matrix,
+even if the collection is not likely to be stored that way.
+First, we assume that there's a universal set,
+from which the elements of all sets are drawn.
+For example, if the sets come from k-shingling documents,
+then the universal set is the set of all possible sequences of K characters or
+the set of all tokens if we hash the shingles.
+Each element in the universal set is represented by a row of the matrix.
+And each set in the collection is represented by a column of the matrix.
+The matrix has one in the row for element E and the column for
+S, if and only if E is a member of S.
+Otherwise that entry is zero.
+The column corresponding to a set as the characteristic vector of the set S.
+The vector with ones only in the positions that correspond to the members of S.
+We shall often talk about the Jaccard similarity of 2 columns.
+From each column, form the set represented by the column,
+except consisting of the rows where the column has 1.
+Then the Jaccard similarity of the two columns is the Jaccard similarity of
+the sets they represent.
+It is important to note that in typical applications, the matrix is very sparse.
+It has many more zeros than ones.
+For example, we choose k for k shingling, so
+that documents have relatively few of the possible shingles.
+We translate into columns having many more zeroes than ones.
+For another example, suppose the matrix represents the books bought by
+Amazon customers, rows are the books and columns are the customers.
+And customers are similar if they buy many of the same books.
+Typical customer buys only a tiny fraction of the books Amazon sells.
+So again, we would expect our matrix to be very sparse.
+Here are two columns, C1 and C2.
+They're not sparse,
+because it's hard to do small examples when most entries are zero.
+However, the calculation of their Jaccard similarity is simple.
+There are two rows where they both have one, so
+the intersection of the sets they represent is of size two.
+And there are five rows where at least one of the columns has one,
+so the size of the union of the represented sets is five.
+Thus the Jacquard similarity is two fifths of 40%.
+In general, you can compute the similarity of two columns,
+by counting the number of rows where both have one, and
+dividing by the number of rows in which one or both have one.
+Our goal is to describe how min hashing of sets or
+matrix column works, and to show that we can deduce the similarity of the sets or
+columns by looking at the signatures that result from in hashing.
+Our first step will be to observe that given two columns we can find four
+different kinds of row, depending upon which bits are present in that row.
+For example, type a row has one in both columns.
+Notice that if the matrix is sparse,
+most of the rows will be of type d with zeros in both columns.
+I find it useful to abuse the notation and use a, b, c and d also
+as integers representing the number of rows of types A, B, C and D in the matrix.
+We can express the Jaccard similarity of two columns in terms of the counts of
+the row types.
+That is the similarity of columns C1 and C2 is A, divided by A plus B plus C.
+The reason is that A is the number of rows in the intersection, and
+A plus B plus C is the number of rows in the union.
+We're now going to define Minhashing.
+Each Minshashing hash function is associated with a permutation of
+the rows of the matrix.
+We don't physically permute the rows, that would take much too much time.
+We just imagine that the rows are permuted.
+The definition of the minhash function h, associated with a permutation is,
+is that h of a column C is the number of the first row in the permuted order,
+in which that column has 1.
+To create a signature for
+each of the columns of the matrix, we pick some number.
+About 100 is often a good choice of permutations.
+And use their associated Minhash functions, say H1 through H100.
+For each column, the signature is the sequence of row numbers we
+get when we apply each of these Minhash functions in turn to the column.
+It is important to remember that for
+the entire matrix or collection of sets, we select the Minhash functions once and
+apply the same Minhash functions to each of the columns.
+We can think of the signatures as another matrix.
+The columns of the signature matrix correspond to the columns of
+the original matrix, that is, to the sets in the collection.
+While each row in the signature matrix is the result of applying one of
+the chosen Minhash functions to each of the columns.
+Let's look at a little example that can make things clearer.
+Here's an example matrix with four columns and seven rows.
+Okay, and here's a random well, quote random permutation of the rows.
+The fifth row is the first in order, that's this.
+And the sixth row is next, and the top row is third and, and so on.
+We construct the first component of the signature for
+each of the columns using this permutation.
+We start with the row ordered first, that is row 5.
+This.
+And this row has one in the second and fourth columns.
+And thus we gave columns two and
+four, their first Minhash value, it is one, and that appears here.
+Okay, because the first row in the permuted order is surely the first in that
+order to have a one in these columns.
+We still don't know about the 2s in the first row of the signature matrix.
+These this.
+We'll discover those next.
+So now, we proceed to row 6.
+This, which is the second in the permuted order.
+And this row has 1s in column 1 and 3.
+It happens that neither of those columns has been assigned a value yet,
+because we haven't encountered a row in which either of those columns have 1.
+But they both get the value 2.
+Because the second row in the permuted order, but
+not the first row in that order has 1 in each of these columns.
+In principle, we have to proceed down the list of rows in the permuted order.
+But since we've discovered the Minhash value for
+each column, there's no point in doing so.
+Here's the second, quote, random permutation, and
+it's resulting row of the signature matrix.
+In this permutation, row 3 comes first.
+It has a 1 in the second and fourth column, so
+the second row of the signature matrix gets 1 in those columns.
+Okay. Now look at the second row in this order,
+which is row two.
+It has one in columns one and four.
+We can't assign value two to column four because we already have a value one.
+But we don't yet have a value for column one.
+So, we assign it,
+the value 2 as its Minhash value in the, in the second Minhash function.
+We still don't know the value for column 3,
+because neither of the two rows examined so far, have 1 in that column.
+So, we proceeds to the third row in the permuted order, which is row 4.
+And it has one's in columns two and
+four, but both these columns have smaller values already, so we're still not done.
+So we move on to the fourth row.
+It happens to be the top row here.
+And now we find finally, a one in column 3.
+So, the Minhash value for that column is four.
+Okay, and now we're done with this Minhash function.
+He, here's a third permutation and the resulting role of the signature matrix.
+I'll, I'll leave it to you to study the matter and work out, why the Minhash.
+Now, the reason we like mean hashing is a way to summarize answers expressed by
+the following remarkable property.
+Suppose we consider all possible permutations of the rows and ask, for
+what fraction of the permutations would the mean hash values for
+the two columns, C1 and C2, be the same?
+It turns out this probability is exactly the Juccard similarity of the columns or
+the sets they represent.
+Okay, now, here's a simple proof of this fact.
+Both the probability and the similarity are a over a plus b plus c.
+We already know that the Jucard similarity of columns is given by that formula.
+So, why is the probability of the Minhash values being the same also given by
+A over A plus B plus C?
+Imagine the rows are commuted in a random order, and imagine going down the two
+columns in this order, let's see here, C1, here C2.
+Since most entries are zero, we'll probably need a lot of type d rows zero,
+zero, zero, zero zero, and so on.
+Okay, and
+eventually we'll come to a row where at least one of the columns has a one.
+So, let's suppose here's a one.
+Now, if we came first to a type A row, then the MinHash values for
+the columns would agree, because we'd have a one here, okay?
+Okay, and they would both get this row as the as their MinHash value.
+If we come to a type B or C row first, or
+let's say there's a zero here, then one of the columns,
+the first one with the one gets this row as the, as it's meant hash value.
+But the other column will have to wait until we see a one.
+So, it's definitely going to get something higher, and
+they will not have same MinHash value.
+Thus the probability that the two columns will have the same MinHash value,
+is the probability that the first row that isn't of type-d is a type-a row.
+That probability is the number of type-a rows
+divided by the number of rows of any of the types a, b or c.
+That is, A divided by A plus B plus C.
+Armed with this observation we can sensibly define the similarity of
+two signatures.
+It is the fraction of the Minhash functions for
+which the two signatures have the same value.
+It follows that the expected value of the similarity of two
+signatures is the Jaccard similarity of the underlying sets.
+Moreover, as we use more and more minhash functions,
+the standard deviation of the signature similarity goes down.
+So, if we use several hundred Minhash functions, that is,
+signatures of several hundred components,.
+We get a small enough standard deviation that we can estimate the true
+Jaccard similarity of the represented sets to within a few percent.
+That is good enough for most data mining purposes.
+Let's revisit our example of computing signatures of
+length three from this matrix.
+Let's look at some of the signature similarities and
+the actual column similarities.
+Remember that similarity means different things for columns and signatures.
+For columns or sets it is the jacard similarity, while for signatures it
+is the fraction of components in which the two signatures agree.
+So let's look at columns one and
+three and their corresponding signatures.
+Yeah, the Jaccard similarity of the two columns is three fourths.
+Notice that there are four rows where at least one of these two columns is 1.
+That is here, here,
+here, and here.
+And in all of this one, they both have one.
+Thus the size of the intersection is three, and the size of the union is four.
+Now, look at signatures one and three.
+They agree for the first and third Minhash functions.
+But they disagree on the, the second.
+Thus the si, signature similarity is two-thirds.
+Now two-thirds is pretty close to three quarters, but
+there is some discrepancy as we note, here.
+If we look at columns two and four [NOISE]
+We again find the Jaccard similarity is three-quarters.
+But here the similarity of the signatures is 1.
+They are in fact identical in all three components.
+Another int, interesting example is columns 1 and 2.
+These columns have an empty intersection.
+So their Jaccard similarity similarities zero.
+It turns out that when the similarity is zero it is impossible for
+any min hash function to return the same value for these two columns.
+As we see again in the white table.
+Thus the similarity of these signatures is zero as, as it, as it must be.
+Remember that we've defined minhashing as if we'd actually permuted the rows.
+But it is not really feasible to do so.
+So let's, consider, data of modest size where there are a billion rows.
+First of all, takes a lot of time to pick a random permutation of a billion things.
+You essentially have to generate a build a billion random integers and
+do something with each, and representing a random permutation of
+a billion items takes at least, four gigabytes of space.
+If we had, say, 100 random permutations,
+then that's four tenths of a terabyte just to store the permutations.
+Okayt, And if you try to access the rows of the matrix,
+according to the order of one of these permutations,
+then you'll have to do many disk accesses to get each row.
+And that's incredibly time consuming.
+Here's how we simulate permutations without actually permuting rows.
+For each main hash function pick a normal sort of hash function that
+hashes integers to some number of buckets.
+We pretend that the position of row R in the permutation is H of R
+where H is the hash function.
+so, for each column, we'll look for
+that row r, in which the column has a one and for which h of r is the smallest.
+More specifically let's pick some number of ordinary hash functions,
+say 100 hash functions.
+One for each Minhash function we want to simulate.
+Okay?
+For each column c, we keep a slot for each of the hash functions.
+Call the slot for column c and the ith hash function m of i and c.
+If we want a 100 minhash functions,
+then the number of slots is 100 times the numbers of columns.
+Our goal is that eventually M of i and
+c will become the smallest value of h sub i of r.
+For which column c has a 1 in row r.
+That is, we suppose that the ith min hash function orders rows by the value to
+which h sub i sends each row.
+Notice that this order is not exactly a permutation.
+It's Entirely possible that h of i,
+h sub i, maps two or more rows to the same designation.
+But if we make the number of buckets into which h of i hash is very large,
+larger than the number of rows, then the probability of a collision at
+the smallest value is very small, and we can ignore the probability of a collision.
+So here's the algorithm in a nutshell.
+The outer loop is on the rows.
+Okay.
+For each row r, the first thing we do is compute each of the,
+perhaps, hundred hash values, h sub i of r.
+That's this.
+Then, we'll loop over all the column c, and
+if column c does not have a one in row r then we do nothing for r and c.
+Okay, but, now suppose matrix m has one in row r in column c.
+Then we're going to loop over the index I.
+For all the hash functions, and for
+each of these perhaps hundred values of I, we check whether H of S of R is smaller.
+Then the smallest value currently in the slot for
+the hash function, for, hash function i in column c,
+see, if that is the case then we replace that slot by, h by r.
+We take M of i and c to be infinity initially.
+So the first row in which we find has a won in column,
+Also note that it is important we compute h survive r only once for
+each hash function in each row.
+Outside the loop over the columns, that's, that was, that was this.
+So, let's do a little example.
+Our matrix has only two columns and five rows, that's, that's this,
+We're going to use two hash functions, that is we compute signatures of length 2.
+The two hash function, functions that we use are, are shown here.
+Each maps integers to five buckets.
+The, the first which we call h of x, maps any integer X to X marginal 5.
+That is the remainder when X is divided by 5.
+The second G of X computes a 2X plus 1,
+and again takes that modual 5, takes the remainder of 2X plus 1 mod 5.
+Okay, we are ready to compute the two components of the signatures for
+each of these columns.
+Remember that initially, we'll assume all slots are infinity.
+Begin by looking at the first row.
+And we find h of one is one and g of one is three.
+modulus.
+Take, take them all modulus five, so three modular five is in fact three.
+now, row one has one in the first column, but zero in, in the second column.
+Therefore the second signature is not changed, and
+both its components remain at infinity.
+But the first signature is changed to the values of h of 1 and
+g of 1 that is 1 and 3.
+Okay, now, consider the second row,
+h of 2 is 2 and g of 2 is 5 modular 5, or 0.
+Since column 1 has 0 in the second row,
+we do not change its signature.
+But column 2 has 1 in row 2, so
+we replace the infinite values in its signature by 2 and 0.
+Next, the third row, H of three is three, and
+G of three is seven, modular five, which is two.
+There is one in row three of both columns, so
+both signatures are candidates for being lowered.
+However, H of three is three in the first components of both signatures are already
+lower, one and two respectively So, we do not change either first component.
+Now g of 3 is 2, so we might change either second component.
+For the first signature the current value is 3.
+So we lower it to 2.
+But for the second signature, the signature,
+the current value is already zero.
+So we leave it at zero.
+H of 4 is 4 and G of 4 is 9 modular five, which is four.
+And since four is larger than any of the current slots for
+the first column, no changes are made.
+Finally, h of five is five modular five or zero.
+And g of 5 is 11 modulo 5, or 1.
+Only the second column has a 1 in row 5,
+so we can only change its signature.
+Since h to 5 equals 0, and the old value of the slot for h is 2.
+We change it to zero.
+But the slot for g already has zero, which is lower than g of five, which is one.
+So, no change is made there.
+Thus, the final symmetry is r one two for the first column.
+And zero, zero for the second column.
+Incidentally notice that the two signatures disagree for both components,
+so they estimate the Jaccard similarities of the columns that are zero.
+That's off by a little since,
+as you can see the true Jaccard's similarity of the columns is one fifth.
+One last detail is worth mentioning.
+The algorithm we, we describe as soon as we can visit the matrix row by row.
+But often the data is available by columns and not by rows.
+For instance, if we have a file of documents,
+it's natural to process each document once, computing its shingles.
+That, in effect, gives us one column of the matrix.
+If so, we need to do one preliminary step, sort the data, so it is organized by row.
+That's not hard.
+Start with a list of row column pairs where the ones are.
+Initially sort it by column, and sort these pairs by row.
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
