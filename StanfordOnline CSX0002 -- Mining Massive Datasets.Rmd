@@ -2875,9 +2875,9 @@ because we haven't encountered a row in which either of those columns have 1.
 But they both get the value 2.
 Because the second row in the permuted order, but
 not the first row in that order has 1 in each of these columns.
-In principle, we have to proceed down the list of rows in the permuted order.
-But since we've discovered the Minhash value for
-each column, there's no point in doing so.
+[][**In principle, we have to proceed down the list of rows in the permuted order.**]
+**But since we've discovered the Minhash value for**
+**each column, there's no point in doing so.**[][Why? cause we are random picking/experiment labled ball/balls from a shaked box?]
 Here's the second, quote, random permutation, and
 it's resulting row of the signature matrix.
 In this permutation, row 3 comes first.
@@ -2939,8 +2939,8 @@ Armed with this observation we can sensibly define the similarity of
 two signatures.
 It is the fraction of the Minhash functions for
 which the two signatures have the same value.
-It follows that the expected value of the similarity of two
-signatures is the Jaccard similarity of the underlying sets.
+**It follows that the expected value of the similarity of two**
+**signatures is the Jaccard similarity of the underlying sets.**
 Moreover, as we use more and more minhash functions,
 the standard deviation of the signature similarity goes down.
 So, if we use several hundred Minhash functions, that is,
@@ -2977,7 +2977,7 @@ Another int, interesting example is columns 1 and 2.
 These columns have an empty intersection.
 So their Jaccard similarity similarities zero.
 [][It turns out that when the similarity is zero it is impossible for]
-[][any min hash function to return the same value for these two columns.]
+[][any min hash function to return the same value for these two columns.]*the value used in previous 1 will not be used in later 1*
 As we see again in the white table.
 Thus the similarity of these signatures is zero as, as it, as it must be.
 
@@ -2998,13 +2998,14 @@ And that's incredibly time consuming.
 **For each main hash function pick a normal sort of hash function that**
 **hashes integers to some number of buckets.**
 *We pretend that the position of row R in the permutation is H of R*
-*where H is the hash function.*
+where H is the hash function.
 so, for each column, we'll look for
 that row r, in which the column has a one and for which h of r is the smallest.
 More specifically let's pick some number of ordinary hash functions,
 say 100 hash functions.
 One for each Minhash function we want to simulate.
 Okay?
+
 [][For each column c, we keep a slot for each of the hash functions.]
 [][Call the slot for column c and the ith hash function m of i and c.]
 If we want a 100 minhash functions,
@@ -3019,30 +3020,30 @@ Notice that this order is not exactly a permutation.
 *h sub i, maps two or more rows to the same designation.*
 *But if we make the number of buckets into which h of i hash is very large,*
 *larger than the number of rows, then the probability of a collision at*
-*the smallest value is very small, and we can ignore the probability of a collision.*[][define "very small"]
+*the smallest value is very small, and we can ignore the probability of a collision.*[][the prime mod hash functions]
 So here's the algorithm in a nutshell.
-[][The outer loop is on the rows.]**interesting, different with the book I suppose**
+[][The outer loop is on the rows.]
 Okay.
 [][For each row r, the first thing we do is compute each of the,]
 [][perhaps, hundred hash values, h sub i of r.]
 That's this.
-[][Then, we'll loop over all the column c, and]**read the book and think**
+[][Then, we'll loop over all the column c, and]
 [][if column c does not have a one in row r then we do nothing for r and c.]
-Okay, but, now [][suppose matrix m has one in row r in column c.]**what is the matrix m, the original one**
-[][Then we're going to loop over the index I.]*run the code in the brain and read the book*
+Okay, but, now [][suppose matrix m has one in row r in column c.
+[][Then we're going to loop over the index I.]*hash function i*
 [][For all the hash functions, and for]
 [][each of these perhaps hundred values of I, we check whether H of S of R is smaller.]
 [][Then the smallest value currently in the slot for]
 [][the hash function, for, hash function i in column c,]
 [][see, if that is the case then we replace that slot by, h by r.]
 
-We take M of i and c to be infinity initially.**SIG(i,c) matrix I suppose, M is the middle matrix**
-So the first row in which we find has a won in column,
-Also note that it is important we compute h survive r only once for
-each hash function in each row.**because there will be only one 1 in each column, and we are searching 1s row by row**[][Think Here]
+**We take M of i and c to be infinity initially.**
+So the first row in which we find that has a won in column c surely is placed in that slot,
+[][**Also note that it is important we compute h survive r only once for**]
+[][**each hash function in each row.**]
 Outside the loop over the columns, that's, that was, that was this.
 
-So, let's do a little example.[][Do check the sample on the book too, and also read this one, and think diff==========]
+So, let's do a little example.
 Our matrix has only two columns and five rows, that's, that's this,
 We're going to use two hash functions, that is we compute signatures of length 2.
 The two hash function, functions that we use are, are shown here.
@@ -3104,14 +3105,33 @@ as you can see the true Jaccard's similarity of the columns is one fifth.
 *But often the data is available by columns and not by rows.*
 For instance, if we have a file of documents,
 **it's natural to process each document once, computing its shingles.**
-**That, in effect, gives us one column of the matrix.**[][so the column is actually the shingles extracked from the document?]
-[][If so, we need to do one preliminary step, sort the data, so it is organized by row.]**Why, because the sequence in language**
+**That, in effect, gives us one column of the matrix.**
+[][If so, we need to do one preliminary step, sort the data, so it is organized by row.]
 That's not hard.
-Start with a list of row column pairs where the ones are.
-Initially sort it by column, **and sort these pairs by row.**[][what pairs???]
+[][Start with a list of row column pairs where the ones are.]
+Initially sort it by column, **and sort these pairs by row.**
 
 
-[][just go to read the book, there will be too much note to take, just go to read the book and watch the lecture]
+![](C:/Users/qp/Pictures/Screenshots/13. Minhashing - please read the book - 0.png)
+![](C:/Users/qp/Pictures/Screenshots/13. Minhashing - please read the book - 1.png)
+![](C:/Users/qp/Pictures/Screenshots/13. Minhashing - please read the book - 2.png)
+![](C:/Users/qp/Pictures/Screenshots/13. Minhashing - please read the book - 3.png)
+![](C:/Users/qp/Pictures/Screenshots/13. Minhashing - please read the book - 4.png)
+![](C:/Users/qp/Pictures/Screenshots/13. Minhashing - please read the book - 12.png)
+![](C:/Users/qp/Pictures/Screenshots/13. Minhashing - please read the book - 6.png)
+![](C:/Users/qp/Pictures/Screenshots/13. Minhashing - please read the book - 7.png)
+![](C:/Users/qp/Pictures/Screenshots/13. Minhashing - please read the book - 8.png)
+![](C:/Users/qp/Pictures/Screenshots/13. Minhashing - please read the book - 9.png)
+![](C:/Users/qp/Pictures/Screenshots/13. Minhashing - please read the book - 10.png)
+![](C:/Users/qp/Pictures/Screenshots/13. Minhashing - please read the book - 11.png)
+![](C:/Users/qp/Pictures/Screenshots/13. Minhashing - explaning steps - 1.png)
+![](C:/Users/qp/Pictures/Screenshots/13. Minhashing - Application of Set Similarity.png)
+![think about it](C:/Users/qp/Pictures/Screenshots/13. Minhashing - concerns on prime mod function.png)
+![](C:/Users/qp/Pictures/Screenshots/13. Minhashing - computer basic.png)
+
+![](C:/Users/qp/Pictures/Screenshots/3.3.7 speed up using hash functions - 1.png)
+![](C:/Users/qp/Pictures/Screenshots/3.3.8 exercises for session 3.3 - 1.png)
+![](C:/Users/qp/Pictures/Screenshots/3.3.8 exercises for session 3.3 - 2.png)
 
 
 
