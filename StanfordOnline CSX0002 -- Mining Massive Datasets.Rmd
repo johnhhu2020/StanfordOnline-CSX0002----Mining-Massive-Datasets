@@ -3142,34 +3142,37 @@ Initially sort it by column, **and sort these pairs by row.**
 Now we're ready to learn and apply the idea of locality-sensitive hashing.
 We're going to do this first for
 the special case of minhash signatures and later see the general LSH idea.
+
 First, let's remember where we've gotten so far.
 We converted documents to sets of shingles and then we converted the presumably large
-sets of shingles to short signatures, consistently a vectors of integers.
+sets of shingles to short signatures, consistently a vectors of integers.[][Hashing then Minhashing]
 We can compare two signatures as they make quite close to
 the Jaccard similarity of their underlying sets.
 Since the signatures are relatively short, we can fit many of them into main memory
 at once and thus compare many different pairs of these signatures without having
 to spend the time needed to read each signature from disk many times.
-The idea behind LSH is to look at the collection of elements, that is,
-signatures in our example here, whose similar pairs we want to find and
-without constructing all pairs of those elements, create a short list of
+
+*The idea behind LSH is to look at the collection of elements, that is,*
+*signatures in our example here, whose similar pairs we want to find and*
+*without constructing all pairs of those elements,* create a short list of
 candidate pairs whose similarity actually must be measured.
-When constructing candidate pairs,
-you look only at individual elements, not at the pairs themselves.
+[][When constructing candidate pairs,]
+[][you look only at individual elements, not at the pairs themselves.]
 All pairs that are not candidates are assumed not to be similar even though in
 rare cases, there will indeed be false negative.
 That is, pairs that are similar but never checked for similarity.
-For the cases of signature matrices,
+[][For the cases of signature matrices,]
 we perform LSH by creating some large number of hash functions.
 These are ordinary hash functions, not minhash functions.
-For each selected hash function, we hash columns to buckets.
+[][For each selected hash function, we hash columns to buckets.]*first generate column-num of buckets, then hash combinations to pair*
 For each bucket, we make all pairs within that bucket a candidate pair.
 A pair becomes a candidate pair if any one or
 more of the hash functions puts both signatures in the same bucket.
+
 Okay.
-We need to tune the number of hash functions and the number of buckets for
-each hash function so that the buckets have relatively few signatures in them.
-That way, there are not too many candidate pairs generated.
+[][We need to tune the number of hash functions and the number of buckets for]**
+[][each hash function so that the buckets have relatively few signatures in them.]
+*That way, there are not too many candidate pairs generated.*
 But we can't use too many buckets, or else, pairs that are truly similar
 will not wind up in the same bucket for even one of the hash functions we use.
 To start, we have to agree on how similar is similar.
@@ -3177,18 +3180,19 @@ We pick the threshold t that is the minimum value of Jaccard similarity for
 us to regard a pair of signatures as similar.
 That is, in the ideal world, columns c and d of the signature matrix M would be
 a candidate pair if and only if their similarity was at least t.
-Remember that the similarity of signatures is the fraction of components or
-rows of the signature matrix M on which they agree.
+**Remember that the similarity of signatures is the fraction of components or**
+**rows of the signature matrix M on which they agree.**
 So we want columns c and d to be a candidate pair if the fraction of rows
 i for which m of i and c and m of i and
 d are the same to be at least t.
-So we need to create some number of hash functions and
-use each to hash the columns of signature matrix M into buckets.
+*So we need to create some number of hash functions and*
+*use each to hash the columns of signature matrix M into buckets.*
 And we need a trick to make sure that similar signatures, or
 columns, are much more likely to hash to the same bucket for
 one of these hash functions than if the signatures are dissimilar.
 As we mentioned before, we're going to regard a pair of signatures as
-a candidate pair if even one of the hash functions puts them in the same bucket.
+[][a candidate pair if even one of the hash functions puts them in the same bucket.]
+
 So, here's the picture of how the hash functions are created.
 The yellow area is the signature matrix M.
 Each column corresponds to one signature and
@@ -3199,30 +3203,31 @@ We divide the rows into b bands for some number b.
 As a result, there are r rows per band,
 where b times r is the total length of the signatures.
 That is, the number of main hash functions we use to create the signatures.
-We're going to create one hash function from each band.
+*We're going to create one hash function from each band.*
 Remember, we divided the signature matrix M into b bands of r rows each.
-From each band, we create a hash function.
+[][From each band, we create a hash function.]
 This hash function hashes the values that a given column has in that band only.
-Ideally, we would make one bucket for
-each possible vector of b values that a column could have in that band.
+[][Ideally, we would make one bucket for]
+[][each possible vector of b values that a column could have in that band.]
 That is, we'd like to have so many buckets that the hash function is
-really the identity function, but that is probably too many buckets.
-For example, if b equals 5 and
-the components of a signature are 32-bit integers,
-then they would be 2 to the 5 times 32, or 2 to the 160th power of buckets.
+**really the identity function, but that is probably too many buckets.**
+*For example, if b equals 5 and*
+*the components of a signature are 32-bit integers,*
+*then they would be 2 to the 5 times 32, or 2 to the 160th power of buckets.*[][Think here]
 We can't even look at all these buckets to see what is in them at the end.
 So we'll probably want to pick a number of buckets that is smaller,
 say, a million or a billion.
 As we said, we consider a pair of columns and signatures to be a candidate pair if
 they are in the same bucket according to the hash function for any of the bands.
-Put another way,
-the only way we can be sure a pair of signatures will become a candidate pair
-is if they, if they have exactly the same components in at least one of the bands.
+*Put another way,*
+[][the only way we can be sure a pair of signatures will become a candidate pair]
+[][is if they, if they have exactly the same components in at least one of the bands.]
 Notice that if most of the components of two signatures agree,
 then there's a good chance that they will have 100% agreement in some band.
 But if they have few components in common,
 then they are unlikely to agree 100% in any band.
 We'll make the mathematics more precise shortly, but that's the intuition.
+
 Given t, the threshold Jaccard similarity needed for
 pairs to be considered similar, we need to tune b and r so
 that most of the similar pairs are 100% similar in at least one band.
@@ -3243,11 +3248,12 @@ two signatures to hash to the same bucket for
 a given band and there a few bands that give them the opportunity to do so.
 Thus a small number of bands is best if we have a high threshold of similarity.
 Again, we'll make the math precise shortly.
+
 Before we go on, here's a picture of what one of the hash functions for
 LSH on signature matrices looks like.
 We see one of the b bands, the band consisting of r rows, of course.
 Oh, we also show the matrix that's consisting of several,
-of seven columns or signatures.
+[][of seven columns or signatures.]
 And each of the purple rep,
 rectangles represents the portion of its column within the one band we focus on.
 Now, columns six and seven hash to different buckets.
@@ -3268,7 +3274,7 @@ Are identical.
 There's a small chance that these segments of these columns are not identical, but
 they just happen to hash to the same bucket.
 We will generally neglect that probability as it can be made tiny,
-like 1 in 4 billion, if we use 2 to the 32nd power buckets.
+[][like 1 in 4 billion, if we use 2 to the 32nd power buckets.]
 Let's look at a particular example to get a feel for
 how the probabilities of false positives and negatives work out in practice.
 We'll assume there are 100,000 columns.
@@ -3283,23 +3289,24 @@ each signature takes 400 bytes and the total space requirement is 40 megabytes.
 Now, let the similarity threshold be 80%.
 That is, we consider a pair of signatures similar if and
 only if they agree in at least 80 of their 100 components.
-There are approximately 5 billion pairs to compare so
-we'd like to use LSH to avoid having to compare them all.
+*There are approximately 5 billion pairs to compare so*
+*we'd like to use LSH to avoid having to compare them all.*
 Incidentally, if you don't see why 5 billion is the approximate count of pairs,
 the exact number of pairs of items chosen from a 100,000 items is
 a 100,000 choose two.
 Which is a 100,000 times 99,999 divided by 2.
 And if we approximate the five 9s by a 100,000, we get exactly 5 billion.
+
 In our example, we're going to divide the 100 rows of signatures ma,
 of the signature matrix into 20 bands with five rows each.
 First, let's consider two columns, C1 and C2,
 that represent sets with Jaccard similarity 0.8.
 Notice that because of the randomness involved in minhashing, the columns C1 and
 C2 may agree in more or fewer than 80 of their rows,
-but they'll most likely have approximately 80 equal rows.
-Now, what is the probability that these columns are 100% similar in
-one given band?
-Well, the probability that they agree in any one row is exactly 0.8.
+**but they'll most likely have approximately 80 equal rows.**
+[][Now, what is the probability that these columns are 100% similar in]
+[][one given band?]
+[][Well, the probability that they agree in any one row is exactly 0.8.]
 Remember that the probability that a minhash function agrees on
 two sets equals the Jaccard similarity of the underlying sets.
 So the probability that the two columns agree in all five of the rows of
@@ -3315,27 +3322,30 @@ which is a tiny number.
 It's actually this 0.00035.
 The chance that pair C1 and C2 will
 be a candidate pair is 1 minus that, or 0.99965.
-Put another way, the probability of a false negative,
-a pair of sets that have Jaccard similarity 80%, but
-whose signatures do not become a candidate pair is 0.00035, or about 1 in 3,000.
+*Put another way, the probability of a false negative,*[][False Negative: check wikipedia and think]
+*a pair of sets that have Jaccard similarity 80%, but*
+*whose signatures do not become a candidate pair is 0.00035, or about 1 in 3,000.*
+
 Now look at a pair of sets that have Jaccard similarity 0.4.
 The probability their signatures are identical in a given band is
 0.4 to the fifth power, or about 1%.
 The probability that their signatures hash to the same bucket in at least one of
-the 20 bands is surely no more than 20 times that, or 20%.
+the 20 bands is surely no more than 20 times that, or 20%.[][1-(1-0.4**5)**20]
 that's, that's not great.
-It means that among 40% similar underlying sets,
-there are 20% false positives, pairs of signatures we will have to compare and
+*It means that among 40% similar underlying sets,*
+*there are 20% false positives, pairs of signatures we will have to compare and*[][False Positive: (0.2*0.6)/(0.2*0.6+(1-0.2)*0.6)]
 yet will find that they're not at least 80% silar, similar.
+
 But 20% false positives is bad, but the false
 positive rate falls rapidly as the similarity of underlying sets decreases.
-For example, for 20% Jaccard similarity, we get less than 1% false positives.
+For example, for 20% Jaccard similarity, we get less than 1% false positives.[][1-(1-0.2**5)**20, (0.8*0.00638058)/(0.8*0.00638058+(1-0.00638058)*0.8)][][FPR = FP/(FP+TN): where FP is the number of false positives, TN is the number of true negatives and N = FP + TN is the total number of ground truth negatives. ]
 We cannot determine the exact number of false positives because that
 depends on the distribution of Jaccard Similarities among the underlying sets.
 For example, if most pairs of sets were 79% similar,
 almost all would be false positives.
-But if the typical pair of sets has a Jaccard similarity of a few percent,
-then there would be almost no false positives.
+**But if the typical pair of sets has a Jaccard similarity of a few percent,**
+**then there would be almost no false positives.**
+
 A way to look at the problem of designing an LSH scheme from
 a minhash matrix is this.
 We want the probability of two columns sharing a bucket to be
@@ -3344,17 +3354,18 @@ equal to the value at which we regard the underlying sets similar.
 That is, if the Jaccard similarity s of the underlying sets is less than t,
 we want there to be zero chance the signatures will share a bucket for
 one of the hashings and thus become a candidate pair.
-However, if the underlying Jaccard similarity exceeds 2,
+However, if the underlying Jaccard similarity exceeds t,
 we want the pair of signatures surely to become a candidate pair.
-On the other hand, what does a single row of a signature matrix gives us?
+*On the other hand, what does a single row of a signature matrix gives us?*
 It gives us a straight line.
 The justification is the theorem about the probability of
 two minhash values equaling the Jaccard similarity of the underlying set.
 That's not too bad.
 At least the probability goes in the right direction, but
-it does leave a lot of false positives and negatives.
-That is, for a given threshold t, all of these are false positives and
+[][it does leave a lot of false positives and negatives.]**I think false positive on the top and false negative on the button**
+That is, for a given threshold t, all of these are false positives and**How does this make sense???**
 all of these are all false negatives.
+
 But when we combine many minhash functions into b bands of r rows each, we begin to
 get an s curve shape with greatly reduced false positive and negative regions.
 We're going to derive the function that relates the probability of two sets having
@@ -3370,7 +3381,7 @@ Finally, the probability that their signatures will agree in at
 least one band is one minus that, or
 one minus the quantity, one minus s to the r all raised to the bth power.
 Okay?
-As b and r get large, this function increasingly resembles a step function.
+[][As b and r get large, this function increasingly resembles a step function.]**How can I see that???**
 And the threshold at which the rise occurs is approximately 1 over b
 raised to the power of 1 over r.
 For example, in the case of b equals 20 and r equals 5,
@@ -3387,18 +3398,19 @@ That is, the slope is less than one-half in both these regions.
 So a rough approximation to this curve looks like, like this.
 Okay, it's not exactly a step function, but
 much better than the linear function we got from a single row.
+
 So here's a summary of what we need to do to find sets with
 a given threshold t of Jaccard similarity.
 First, we need to decide on our values of b and r.
 As we mentioned, the threshold t will be approximately 1 over b
 to the power of 1 over r.
-But there are many suitable values of b and r for a given threshold.
-The larger we make b and r, that is, the longer the signatures we use,
-the closer the s curve will be to a step function.
+**But there are many suitable values of b and r for a given threshold.**
+[][The larger we make b and r, that is, the longer the signatures we use,]
+[][the closer the s curve will be to a step function.]
 And therefore, the fewer false positives and negatives we can have.
 But the longer we make the signatures, the more space they will take and
 the more work it will be to perform all the minhashing.
-Then we must run the LSH to get the candidate pairs.
+**Then we must run the LSH to get the candidate pairs.**
 For each candidate pair, we examine their signatures and
 count the number of components in which they agree.
 That way, we can determine whether the similarity of the signatures really
@@ -3412,12 +3424,59 @@ overestimate the similarities of the sets that they represent, so
 it is possible that the two sets are not really similar enough.
 By computing the Jaccard similarity of the underlying sets,
 we can eliminate the false positives.
-Unfortunately, we cannot eliminate false negatives this way.
+**Unfortunately, we cannot eliminate false negatives this way.**
 If two sets have Jaccard similarity above threshold, but
 by bad luck, their signatures never become a candidate pair,
 then we'll never look at this pair of signatures or their underlying sets.
 
+![](C:/Users/qp/Pictures/Screenshots/3.4 Locality-Sensitive Hashing for Documents - 1.png)
+![](C:/Users/qp/Pictures/Screenshots/3.4 Locality-Sensitive Hashing for Documents - 2.png)
+![](C:/Users/qp/Pictures/Screenshots/3.4 Locality-Sensitive Hashing for Documents - 3.png)
+![](C:/Users/qp/Pictures/Screenshots/3.4 Locality-Sensitive Hashing for Documents - 4.png)
+![](C:/Users/qp/Pictures/Screenshots/3.4 Locality-Sensitive Hashing for Documents - 5.png)
+![](C:/Users/qp/Pictures/Screenshots/3.4 Locality-Sensitive Hashing for Documents - picture of how the hash function are created.png)
+![](C:/Users/qp/Pictures/Screenshots/3.4 Locality-Sensitive Hashing for Documents - what one hash function on signature matrix looks like.png)
+![](C:/Users/qp/Pictures/Screenshots/Analysis of LSH - what we want - 1.png)
+![](C:/Users/qp/Pictures/Screenshots/Analysis of LSH - what we want - 2.png)
+[][++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++]
+![](C:/Users/qp/Pictures/Screenshots/Analysis of LSH - what we want - 3.png)
+[][++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++]
+![](C:/Users/qp/Pictures/Screenshots/Analysis of LSH - what we want - 4.png)
+![](C:/Users/qp/Pictures/Screenshots/Analysis of LSH - what we want - 5.png)
+![](C:/Users/qp/Pictures/Screenshots/Analysis of LSH - what we want - 6.png)
 
+
+'''[][*****************************************************************************************************************************]
+From what I understand/guessing:
+1> Bucket num = Column num, and Hash function num = Band num
+2> in each Band, generate a Bucket first - which is the column, then hash all its combination columns to that Bucket, keep it if equals (Question, did I wrong?)
+
+"
+i Exercise 3.4.4 : Suppose we wish to implement LSH by MapReduce. Specifi-cally, assume chunks of the signature matrix consist of columns, and elements are key-value pairs where the key is the column number and the value is the signature itself (i.e., a vector of values). 
+(a) Show how to produce the buckets for all the bands as output of a single MapReduce process. Hint : Remember that a Map function can produce several key-value pairs from a single element. 
+(b) Show how another MapReduce process can convert the output of (a) to a list of pairs that need to be compared. Specifically, for each column i, there should be a list of those columns j > i with which i needs to be compared.
+"
+-- Source: Mining Massive Datasets - 3.4.1 LSH for Minhash Signatures
+
+3> Answer: in Map job converting each Element (each Signature matrix row in each Band and each Column) to Bucket, by Hashing r Row in each b Band of each Column to a vector as a Bucket, in Reduce job for each Bucket compare with the Combination Bucket, store Bucket and its Similarities to a List as value and Bucket as Key. (Question, did I wrong?)
+Map process:
+[Signature_1,
+ Signature_2,
+ Signature_3,
+ Signature_4,
+ Signature_5]  to [Bucket_1],
+4> in which Bucket_1 is a string append of all the Elements in each Band of each Column. (Question, did I wrong?)
+
+Reduce process in Band_1:
+[{Bucket_1: [Bucket_2, Bucket_11, Bucket_28]},
+ {Bucket_3: [Bucket_11, Bucket_137, Bucket_223, Bucket_342]},
+ {Bucket_4: [Bucket_5, Bucket_6]},
+ {Bucket_7: [Bucket_23, Bucket_79]},
+ {Bucket_8: [Bucket_9, Bucket_10]},
+ {Bucket_12: [Bucket_35]},
+ ......]
+5> in Band_2 we will not re-process the Buckets that already have/in pair(s), but searching only those never appeared in Key or Value in Band_1. (Question, did I wrong?) 
+'''[][*****************************************************************************************************************************]
 
 
 
