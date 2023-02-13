@@ -3483,5 +3483,204 @@ Reduce process in Band_1:
 
 
 
+## 15. Applications of LSH (11:40)
+
+We’ve see when use of locality sensitive hashing, where the underlying
+data is a collection of sets and similarity means Jaccard similarity.
+But there are other approaches that share the same goal of focusing our search on
+the pairs that are likely to be similar.
+We’re now going to see some of these variations.
+Later, we'll examine general techniques and
+definitions of similarity other than Jaccard similarity.
+And we'll see that LSH is really an approach to problems rather than,
+than a particular algorithm.
+[][Our first example of using LSH concerns a problem called entity resolution.]
+In this kind of problem, we're given a collection of records.
+Each record provides some information about an entity
+typically entities are people but
+they could be companies, physical locations, events or any number of things.
+**The entity resolution problem is to determine which sets of**
+**records refer to the same person and**
+**to merge these records into one record that tells everything about that entity.**
+The problem is way more complicated than it looks.
+for, for example, it is typical that records about people include the name of
+the person, so it looks like it should be no problem at all
+to group them into sets that represent the same individual.
+But in a large collection of records, there will be people with the same name,
+so grouping by name will merge records for different people and worse, the same
+person may have their name written in different ways in different records.
+Some records will have their middle initials and others not.
+A person's nickname may appear in one place and
+their formal name in another, like Sue and Susan.
+And, of course misspellings occur which makes names look different even if they
+are intended to be identical.
+And we often can compensate for
+these discrepancies by using other information in the records.
+For example, two records may have similar names, but identical phone numbers or
+identical addresses.
+That's when the problem becomes really interesting.
+
+I'm going to tell you a real story of how I use LSH to get a big consulting fee.
+After I retired from Stanford I took a job consulting for some lawyers.
+They were dealing with a lawsuit involving two companies that I will call A and B.
+Okay. Company B had a service and
+Company A agreed to use its customer base to find customers for Company B.
+But the companies took to squabbling and the deal was eventually cancelled.
+Since B was serving many of the customers that A had sent them, A was owed fees for
+these customers and sued to get those fees.
+Unfortunately, neither company had bothered to modify their records to
+indicate whether a customer had been part of this deal.
+They could have created a record, we sent this guy to B, and B could have
+added a bit to their record saying, this guy came from A but neither did.
+So they had to pay me to figure out how many customers appeared in
+the databases of both companies.
+*To set the scale of the problem each company had about a million records that*
+*might represent the customer that A had provided to B.*
+That's a tiny database by todays standards, but
+*notice that there are a trillion pairs of records, one from A and one from B,*
+*that might be the same person.*
+It is way too expensive to examine and evaluate a trillion pairs of records.
+Each record from either company, had a name, address, and
+phone number but often these were different, even for the same person.
+in, in addition to typos and the sorts of variation in
+name we discussed earlier there were many other sources of difference.
+People would move and tell one company their new address but not the other.
+Area codes would change even though the rest of your phone number remained
+the same.
+People would get married and change their name.
+In all these cases one company might track the change and the other not.
+[][So our, our first step wa,]
+[][wa, was to devise a measure of how similar records were.]
+We gave 100 points each for identical names, addresses, and
+phone numbers, so 300 was the top score.
+Interestingly only 7,000 pairs of records received this top score, although
+we identified over 180 thousand pairs that were very likely the same person.
+Then we penalize differences in these three fields.
+Completely different names addresses or
+phones got zero score but small changes gave scores close to 100.
+For example if the last names were the same but
+there was a small spelling difference in the first names.
+like, like this.
+Then the score for the name would be 90.
+If the last names were the same but
+the first name's completely different the score for the names would be 50.**family member?**
+We scored all candidate pairs of records and
+reported those pairs that were above a certain threshold as matches.
+[][One of the subtle points is how we set the threshold without knowing ground truth.]
+*That is, which pairs of records really were created by the same individuals.*
+Notice that this is not a job you can do with machine learning, because there's no
+training set available and, we'll, we'll talk about how we did this soon.
+'Kay so as I mentioned we can't afford to score all trillion pairs of records.
+Okay, so I devised a really simple form of locality sensitive hashing to
+focus on the likely matches.
+Here we used exactly three hash functions.
+One had a bucket for each possible name.
+The second had a bucket for each possible address.
+And the third had a bucket for each possible phone number.
+[][Now, the candidate pairs were those placed in the same bucket by]
+[][at least one of these hash functions.]
+*That is a pair of records was a candidate pair if and*
+*only if they agreed exactly in at least one of the three fields.*
+Did we lose some pairs?
+Surely we did.
+Because there would be some pairs of records that had small differences in
+each of the three fields and these would never become candidates for scoring.[][String similarity: DataCamp]
+We actually did a hand sampling of records and
+estimate that there were, about 2,500 pairs of records that we missed.
+But that's not bad compared with 180,000 that we found.
+And finding those extra 2,500 would probably have cost more than
+they were worth to either company.
+
+You may have been puzzled by my remark that we hash to one bucket for each
+possible name since there are in principle an infinite number of possible names.**I'm not think this way**
+[][But we didn't really hash to buckets, rather we sorted the records by name]
+[][and then the records with identical names.]*COUNT(user_id) Cnt GROUP BY name HAVING COUNT(user_id)>1*
+Appear consecutively in the list and we can score each pair with identical names.
+After that we resorted by address and
+did the same thing with records that had identical addresses.
+And then finally we repeated the process by sorting, by, by phone number.**UNION 2 million records, ORDER BY**
+
+We should, we should observe that another approach was to
+follow the strategy we used when we did LSH for signatures we could hash to
+say several million buckets and compare all pairs of records within one bucket.**combinations?**
+**That would sometimes cause us to look at pairs of records with different names that**
+**happened to hash to the same bucket but if the number of buckets is**
+**much larger than the number of different names that actually appeared in the data**
+**then the probability of collisions like this is very low.**[][Think here]
+
+Now remember that we scored each candidate pair of records but
+suppose a pair gets a score like 200 out of 300 indicating a good deal of
+similarity but not perfect similarity.
+Do these records represent the same person?*You already settled the ground truth as 100???*
+Well turns out a score of 200 made it very likely that
+the records represented the same person.
+[][But how could we tell for sure?]
+We devised a way to calculate the probability that records
+with a score x represented the same person.
+And it's worth telling about because it can be used in
+other circumstances as well.
+Even though the data we used was very specific to the, the problem at hand.
+
+First, remember that there's a gold standard.
+7,000 pairs of identical records that we could assume represented the same person.
+For these pairs, we looked at the creation dates at companies A and B.
+It turns out that there was a 10 day lag on average between the time the record was
+created by company A and the time that the same person went to company B to be,
+to begin their service.
+[][On the other hand, in order to reduce further the pairs of records we needed to]
+score we only looked at pairs of records where the A record was created between,**Those combination pairs**
+between zero and 90 days before the B record.**So we can reduce trillion combination pairs to a lower number**
+Now if you take a random A record and a random B record,
+when the A record happens to have been created between zero and
+90 days before the B record, you'll get an average delay of 45 days.**How???**
+These records are almost certain to represent different people because they
+were chosen at random.
+
+[][So let's look at a pool of matches, say those with score 200.]
+Some will be valid matches and
+their average difference in creation dates will be ten.
+Others will be false matches and
+they will have an average difference in creation dates of 45.
+Suppose that within this pool, the average difference is X.
+**A little math tells you that the fraction of matches that**
+**are valid are 45 minus X, all divided by 35.**[][Read the book, Read the book, Read the book]
+So for example, if X equals ten then this fraction is one, which makes sense as
+a ten is the difference that the gold standard provides.
+If x equals 20 then we would expect that five-sevenths of the matches are valid.
+That makes sense five-sevenths of the matches will have an average difference of
+ten and two-sevenths of them will have an average difference of 45.
+So the weighted average of the averages is, is 20.
+
+So we tried to convince the lawyers that they should go into court with a claim of
+a fraction of each of the pools that had average delays less than 45.
+Even though we couldn't tell which pairs in each pool were valid and
+which were not.
+But the lawyers told us not to even try because no judge or
+jury would understand the argument, but you understand it, don't you?[][kind of apple and orange, probability?]
+Well, while we use the creation date field in records, the idea generalizes to
+use any field that was not involved in the locality-sensitive hashing.
+[][All we need to know is that the value in this field will be closer when]
+[][the records represent the same entity than when they represent different entities.]
+That should be the case almost always.
+okay, for a concrete example, suppose records represent individuals and
+they have a height field.
+We can assume that if the records represent the same person
+the average difference in heights will be zero or, or perhaps more precisely,
+the difference will be the average measurement error which we can determine
+if we have some gold standard of records that we know represent the same person.
+This difference substitutes for the difference ten days in our example.
+But if two records represent different people then
+the average height difference will be the average difference for random people.
+We can determine this difference by picking a relatively small number of
+pairs of records at random and
+determining the difference in heights of those two records.
+This difference plays the role of 45 in our example.
+
+![](C:/Users/qp/Pictures/Screenshots/15. Applications of LSH - 1.png)
+![](C:/Users/qp/Pictures/Screenshots/15. Applications of LSH - 2.png)
+![](C:/Users/qp/Pictures/Screenshots/15. Applications of LSH - 3.png)
+
+
+
 
 
