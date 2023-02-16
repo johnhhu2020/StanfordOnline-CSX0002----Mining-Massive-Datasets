@@ -3791,6 +3791,9 @@ And by using a larger number of sets of squares and perhaps four or
 five squares per set, we can reduce the false positive rate
 substantially while still keeping the false negative rate low.
 
+![](C:/Users/qp/Pictures/Screenshots/Fingerprint Matching - book1.png)
+![](C:/Users/qp/Pictures/Screenshots/Fingerprint Matching - book2.png)
+![](C:/Users/qp/Pictures/Screenshots/Fingerprint Matching - book3.png)
 ![](C:/Users/qp/Pictures/Screenshots/Fingerprint Matching - 1.png)
 ![](C:/Users/qp/Pictures/Screenshots/Fingerprint Matching - 2.png)
 ![](C:/Users/qp/Pictures/Screenshots/Fingerprint Matching - 3.png)
@@ -3808,8 +3811,8 @@ represent the same story.
 Since the same story maybe used by many different sources,
 each with its own way of presenting it on a web page,
 the problem is not too different from finding similar documents in general.
-But there is a special way of shingling that works well when the difference
-are mostly in the ads associated with the article.
+[][But there is a special way of shingling that works well when the difference]
+[][are mostly in the ads associated with the article.]
 We shall also talk about a simple bucketing method that works
 when the number of sets is not too great, and the similarity expected for
 the underlying articles is quite high.
@@ -3823,8 +3826,8 @@ They wanted to group web pages whose underlying articles were
 the same or similar.
 This by the way, is the same problem faced every day by services such as
 Google News although they do the grouping day by day rather than once and for all.
-Identifying the same underlying article is tricky because each news
-source creates a page from the article that has unique elements on that page.
+**Identifying the same underlying article is tricky because each news**
+**source creates a page from the article that has unique elements on that page.**
 For example, they will put the newspaper's name and other text elements on the top
 and there will be links to ads on the page.
 It's also common for one site to include links to related or
@@ -3833,9 +3836,9 @@ In addition, it is common for a site not to place the entire article on
 its pages especially if the article is long.
 They will leave off the paragraphs at the end or
 even delete other paragraphs that the editor finds less relevant.
-Now, the CS team had not heard of locality sensitive hashing or minhashing.
-However, they invented a form of shingling that is probably better than the standard
-approach we covered for those webpages that are of the type we just described.
+[][Now, the CS team had not heard of locality sensitive hashing or minhashing.]
+[][However, they invented a form of shingling that is probably better than the standard]
+[][approach we covered for those webpages that are of the type we just described.]**COOL**
 And they invented a simple substitute for LSH that worked adequately well for
 the scale of problem they were looking at.
 They partitioned the pages into groups of similar length and
@@ -3843,25 +3846,25 @@ they only compared pages in the same group or nearby groups.
 After they had done all this,
 we happened to be talking in the hall and I mentioned minhashing and LSH.
 They implemented these algorithms on that data, and they found that minhashing
-plus LSH was better as long as the similarity threshold was less than 80%.
+plus LSH was better as long as the similarity threshold was less than 80%.[][Beautiful]
 Actually, that is consistent with what is known.
-When you're looking for very high Jaccard similarities like 80 or
-90% then there are indeed more efficient algorithms, and
-we're going to cover these before we leave the topic.
+[][When you're looking for very high Jaccard similarities like 80 or]
+[][90% then there are indeed more efficient algorithms, and]
+[][we're going to cover these before we leave the topic.]
 Interestingly, the first time they implemented minhashing,
-they got it wrong and decided that the method was terrible.
+they got it wrong and decided that the method was terrible.**How they got it wrong, recall what studied**
 But the problem was that I forgot to remind them to
 do the minhashing row by row, where you compute the hash value for
-each row number once and for all rather than once for each column.
-Remember that the rows correspond to the shingles and the columns to the web pages.
+each row number once and for all rather than once for each column.[][Did you understand it??? then think!]
+*Remember that the rows correspond to the shingles and the columns to the web pages.*
 Since their data was naturally stored by columns, that is by web, web pages,
 they needed to sort their set of shingle webpage pairs to organize them by row,
 that is, by shingle.
 Once they did that, they got the positive results I mentioned on the previous slide.
 Before leaving this topic, let me tell you about the way these guys shingle web
 pages containing news articles.
-The key observation was that they needed to give more weight to the articles
-themselves than to the ads and other elements surrounding the article.
+*The key observation was that they needed to give more weight to the articles*
+*themselves than to the ads and other elements surrounding the article.*
 That is, they did not want to identify as similar two articles from
 the same newspaper with the same ads and
 other elements, but different underlying stories.
@@ -3870,9 +3873,9 @@ order to construct sentences properly, but that do not convey much meaning.
 Typically the set of stop words includes things like and, the, to and so on.
 Usually when analyzing text we ignore stop words because they don't tell us
 anything about the subject matter.
-But here the key observation was that the stop words tell us
-whether we're looking at the news article from which we want to take our shingles or
-ads or other peripheral matters from which we do not want to take shingles.
+*But here the key observation was that the stop words tell us*
+*whether we're looking at the news article from which we want to take our shingles or*
+*ads or other peripheral matters from which we do not want to take shingles.*
 For example, ordinary prose would say something like,
 I recommend that you buy Sudzo for your laundry.
 The likely stop words are shown in orange.
@@ -3880,8 +3883,8 @@ I, that, you, for, your.
 Very common words.
 But in an ad we would just find something abbreviated like buy Sudzo,
 which has no stop word at all.
-So they defined a shingle to be a stop word followed by the next two words in
-the sentence, stop words or not.
+[][So they defined a shingle to be a stop word followed by the next two words in]
+[][the sentence, stop words or not.]**Think why this helps**
 Thus, in the sentence on the slide one shingle would be, I recommend that,the
 next would be, that you buy and so on.
 Notice that there are relatively few shingles and
@@ -3890,14 +3893,22 @@ The reason this notion of shingle makes sense is that it biases the set of
 shingles for a page in favor of the news article.
 That is, suppose for simplicity that all pages are half news article and
 half ads, if you count by number of characters.
-If we have a second page with, with the same article, but
+If we have a second page with, with the same article, but[][Because of the "stick" stop words]
 different ads, we find that most of the shingles for
-both pages come from the article, because that's where the stop words are.
+both pages come from the article, because that's where the stop words are.[][Read the book and think]
+```
+ “I recommend that,” “that you buy,” “you buy Sudzo,” “for your laundry,” and “your laundry x,”
+ ------notice the way how we jump
+```
 So these two pages have almost the same shingles, and
 therefore have very high Jaccard similarity.
 Now consider two pages with the same ads and different articles.
 These will have low Jaccard similarity, because again, most of their shingles come
 from the articles and these shingles would be mostly different for the two articles
+
+![](C:/Users/qp/Pictures/Screenshots/Finding Duplicate News Articles - 1.png)
+![](C:/Users/qp/Pictures/Screenshots/Finding Duplicate News Articles - 2.png)
+![](C:/Users/qp/Pictures/Screenshots/Finding Duplicate News Articles - 3.png)
 
 
 
